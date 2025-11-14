@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react'
 import gfx from './gfx';
 
+let started = false;
+
 const Canvas = props => {
   
   const { draw, ...rest } = props;
@@ -9,7 +11,10 @@ const Canvas = props => {
   useEffect(() => {
 
     const canvas = canvasRef.current;
-    gfx.start(canvas);
+    if (!started) {
+      started = true;
+      gfx.start(canvas);
+    }
 
     let frameCount = 0;
     let animationFrameId;
