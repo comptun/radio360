@@ -10,6 +10,7 @@ const Canvas = props => {
 
     const canvas = canvasRef.current;
     gfx.start(canvas);
+
     let frameCount = 0;
     let animationFrameId;
     

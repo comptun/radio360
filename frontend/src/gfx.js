@@ -43,6 +43,9 @@ var gfx = {
         this.imageTextures = new Map();
         this.uniformLocations = new Map();
 
+        this.mousePos = {"x": 0, "y": 0};
+        this.zoom = 1;
+
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
@@ -66,6 +69,14 @@ var gfx = {
         this.currentProj = "ortho";
 
         console.log(width, height);
+    },
+
+    setMousePos : function(Pos) {
+        this.mousePos = Pos;
+    },
+
+    setZoom : function(Zoom) {
+        this.zoom = Zoom;
     },
 
     togglePerspective : function() {
@@ -143,12 +154,12 @@ var gfx = {
             this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
             this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
 
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
 
-            this.gl.generateMipmap(this.gl.TEXTURE_2D);
+            //this.gl.generateMipmap(this.gl.TEXTURE_2D);
 
             this.imageTextures.get(imageSrc).loaded = true;
         };
@@ -287,6 +298,8 @@ var gfx = {
         this.gl.uniform1i(this.getUniformLocation(this.planetProgram, "iChannel0"), 0);
         this.gl.uniform1i(this.getUniformLocation(this.planetProgram, "iChannel1"), 1);
         this.gl.uniform1i(this.getUniformLocation(this.planetProgram, "iChannel2"), 2);
+        this.gl.uniform2fv(this.getUniformLocation(this.planetProgram, "iMouse"), [this.mousePos.x, this.mousePos.y]);
+        this.gl.uniform1f(this.getUniformLocation(this.planetProgram, "Zoom"), this.zoom);
 
         let Channel0 = gfx.getTexture("map");
         let Channel1 = gfx.getTexture("cloud");

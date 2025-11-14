@@ -2,9 +2,10 @@ const fsPlanet = `
 
     precision mediump float;
 
+    uniform vec2 iMouse;
     uniform vec2 iResolution;
     uniform float iTime;
-    uniform vec2 iMouse;
+    uniform float Zoom;
     uniform sampler2D iChannel0;
     uniform sampler2D iChannel1;
     uniform sampler2D iChannel2;
@@ -16,11 +17,23 @@ const fsPlanet = `
     #define d2r(a) ((a)*180.0/Pi)
     #define RGB(r,g,b) pow(vec3(float(r), float(g), float(b))/255.0, vec3(2.22))
 
-    #define R0 1.0000	// Nomralized Earth radius (6360 km)
-    #define R1 1.0094	// Atmosphere radius (6420 km) 
+    mat3 rotX(float a){
+        float s = sin(a), c = cos(a);
+        return mat3(1,0,0,  0,c,-s,  0,s,c);
+    }
+
+    mat3 rotY(float a){
+        float s = sin(a), c = cos(a);
+        return mat3(c,0,s,  0,1,0, -s,0,c);
+    }
+
 
     vec3 Render(in vec2 uv)
     {
+
+        float R0 = 1.0;	// Nomralized Earth radius (6360 km)
+        float R1 = 1.0094;	// Atmosphere radius (6420 km) 
+
         vec3 Color = vec3(0.0);
         float t = 1.0*iTime;
 
@@ -46,15 +59,30 @@ const fsPlanet = `
         vec3 Normal     = vec3(uv.x, uv.y, sqrt(z));
         vec3 Reflection = reflect(vec3(0.0, 0.0, 1.0), Normal);
 
+        float angleY = iMouse.x;   // or a uniform vec2 uAngles
+        float angleX = iMouse.y;
+
+
+        vec3 n = rotY(angleY) * rotX(angleX) * Normal;
+
+        float U = 1.0 - atan(n.z, n.x) / (2.0*Pi);
+        float V = 1.0 - atan(length(n.xz), n.y) / Pi;
+
+
+
+
+
+        
+
 
         // Textures:
-        float U = 1.0-atan(Normal.z, Normal.x) / (2.0*Pi);
-        float V = 1.0-(atan(length(Normal.xz), Normal.y)) / Pi;
-        vec3 Ground = pow(texture2D(iChannel0, vec2(U-t/80.0, V)).xyz, vec3(2.22));
-        vec3 Cloud  = pow(texture2D(iChannel1, vec2(U-t/75.0, V)).xyz, vec3(2.22));
-        vec3 Cloud2 = pow(texture2D(iChannel1, vec2(U-t/75.0+0.001, V)).xyz, vec3(2.22));
-        vec3 KsMap  = pow(texture2D(iChannel1, vec2( -t/200.0, 0.8)).xyz, vec3(2.22));
-        vec3 Night  = pow(texture2D(iChannel2, vec2(U-t/80.0, V)).xyz, vec3(2.22));
+        // float U = 1.0-atan(Normal.z, Normal.x) / (2.0*Pi);
+        // float V = 1.0-(atan(length(Normal.xz), Normal.y)) / Pi;
+        vec3 Ground = pow(texture2D(iChannel0, vec2(U, V)).xyz, vec3(2.22));
+        vec3 Cloud  = pow(texture2D(iChannel1, vec2(U, V)).xyz, vec3(2.22));
+        vec3 Cloud2 = pow(texture2D(iChannel1, vec2(U, V)).xyz, vec3(2.22));
+        vec3 KsMap  = pow(texture2D(iChannel1, vec2( 0.0, 0.8)).xyz, vec3(2.22));
+        vec3 Night  = pow(texture2D(iChannel2, vec2(U, V)).xyz, vec3(2.22));
         
         // Shading
         float Diffuse     = max(0.0, dot(Normal, LightDir));
@@ -83,7 +111,7 @@ const fsPlanet = `
     {
         vec2 newFragCoord = vec2(gl_FragCoord.x, iResolution.y - gl_FragCoord.y);
         vec2 uv = (2.0*newFragCoord - iResolution.xy) / iResolution.y;
-        vec3 Color = pow(Render(1.05*uv),  vec3(0.45));
+        vec3 Color = pow(Render(1.05*uv*Zoom),  vec3(0.45));
         gl_FragColor = vec4(Color, 1.0);
     }
 
