@@ -35,7 +35,7 @@ const fsPlanet = `
         float R1 = 1.0094;	// Atmosphere radius (6420 km) 
 
         vec3 Color = vec3(0.0);
-        float t = 1.0*iTime;
+        float t = 10.0;//1.0*iTime;
 
         // Sun:
         vec3 L0 = vec3(cos(0.1*t), 0.0, sin(0.1*t));

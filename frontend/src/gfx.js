@@ -3,6 +3,25 @@ import ImageList from './image_list';
 import GeoJson from './data/countries.json';
 import { earcut, flatten } from './earcut';
 
+function ensureWinding(coords) {
+    // coords = array of rings [[x,y], [x,y], ...]
+    // outer ring should be CCW
+    if (ringArea(coords[0]) < 0) coords[0].reverse();
+
+    // holes should be CW
+    for (let i = 1; i < coords.length; i++) {
+        if (ringArea(coords[i]) > 0) coords[i].reverse();
+    }
+}
+
+function ringArea(points) {
+    let area = 0;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        area += (points[j][0] * points[i][1] - points[i][0] * points[j][1]);
+    }
+    return area / 2;
+}
+
 var gfx = {
 
     canvas : null,
@@ -21,6 +40,11 @@ var gfx = {
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
         this.gl.clearColor(0, 0, 0, 0); // Ensure transparent background
 
+        // this.gl.enable(this.gl.CULL_FACE);
+        // this.gl.cullFace(this.gl.BACK);
+
+        this.gl.enable(this.gl.DEPTH_TEST);
+
         this.startTime = Date.now();
 
         this.imageProgram = this.createShaderProgram(vsSource, fsSource);
@@ -29,6 +53,7 @@ var gfx = {
         this.floorProgram = this.createShaderProgram(vsBackgroundSource, fsGround);
         this.sphereProgram = this.createShaderProgram(vsSphere, fsSphere);
         this.planetProgram = this.createShaderProgram(vsSphere, fsPlanet);
+        this.geoProgram = this.createShaderProgram(vsGeo, fsGeo);
 
         this.squareVAO = this.gl.createVertexArray();
         this.gl.bindVertexArray(this.squareVAO);
@@ -79,37 +104,163 @@ var gfx = {
 
         this.geoData = [];
 
+        this.mapScale = null;
+        this.getMapScale();
+
+        this.islandsFramebuffer = this.createFramebuffer();
+        
         this.readGeoData();
     },
 
-    readGeoData : function() {
+    getIslandsFramebuffer : function() {
+        return this.islandsFramebuffer;
+    },
 
-        let getData = (coords, vertexList, indicesList) => {
-            let data = flatten(coords);
-            let tris = earcut(data.vertices, data.holes, data.dimensions);
-            for (let i = 0; i < tris.length; i++) {
-                indicesList.push(tris[i] + vertexList.length);
-            }
-            for (let i = 0; i < data.vertices.length; i++) {
-                vertexList.push(data.vertices[i]);
+    bindFramebuffer : function(fb) {
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb);
+    },
+
+    createFramebuffer : function() {
+        let width = this.mapScale.x*2000;//this.canvas.width;
+        let height = this.mapScale.y*2000;//this.canvas.height;
+        console.log(width);
+        console.log(height);
+        const texture = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D,
+            0,
+            this.gl.RGBA,
+            width,
+            height,
+            0,
+            this.gl.RGBA,
+            this.gl.UNSIGNED_BYTE,
+            null
+        );
+
+        // Required texture parameters for FBO attachments
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
+
+        const framebuffer = this.gl.createFramebuffer();
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, framebuffer);
+
+        // Attach the texture as the color buffer
+        this.gl.framebufferTexture2D(
+            this.gl.FRAMEBUFFER,
+            this.gl.COLOR_ATTACHMENT0,
+            this.gl.TEXTURE_2D,
+            texture,
+            0
+        );
+
+        const depthBuffer = this.gl.createRenderbuffer();
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, depthBuffer);
+        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
+
+        this.gl.framebufferRenderbuffer(
+            this.gl.FRAMEBUFFER,
+            this.gl.DEPTH_ATTACHMENT,
+            this.gl.RENDERBUFFER,
+            depthBuffer
+        );
+
+        if (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) !== this.gl.FRAMEBUFFER_COMPLETE) {
+            console.error("Framebuffer not complete");
+        }
+        
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+        return {
+            texture:texture,
+            framebuffer:framebuffer
+        }
+    },
+
+    getMapScale : function() {
+        if (this.mapScale!=null) {
+            return this.mapScale;
+        }
+        let minX = +Infinity, maxX = -Infinity;
+        let minY = +Infinity, maxY = -Infinity;
+
+        for (const f of GeoJson.features) {
+            const coords = f.geometry.type === "MultiPolygon"
+                ? f.geometry.coordinates.flat(2)
+                : f.geometry.coordinates.flat(1);
+
+            for (const [x, y] of coords) {
+                minX = Math.min(minX, x);
+                maxX = Math.max(maxX, x);
+                minY = Math.min(minY, y);
+                maxY = Math.max(maxY, y);
             }
         }
+
+        let mapW = maxX - minX;
+        let mapH = maxY - minY;
+
+        let scale = Math.min(this.canvas.width / mapW, this.canvas.height / mapH);
+        this.mapScale = {
+            x:this.canvas.width / mapW,
+            y:this.canvas.height / mapH
+        };
+        return this.mapScale;
+    },
+
+    readGeoData : function() {
 
         for (let i = 0; i < GeoJson.features.length; i++) {
 
             let indices = [];
             let vertices = [];
 
-            if (GeoJson.features[i].geometry.type == "MultiPolygon") {
-                for (let j = 0; j < GeoJson.features[i].geometry.coordinates.length; j++) {
-                    getData(GeoJson.features[i].geometry.coordinates[j], vertices, indices);
+            if (GeoJson.features[i].geometry.type != "MultiPolygon") {
+                ensureWinding(GeoJson.features[i].geometry.coordinates);
+                let data = flatten(GeoJson.features[i].geometry.coordinates);
+                let tris = earcut(data.vertices, data.holes, data.dimensions);
+                for (let k = 0; k < tris.length; k++) {
+                    indices.push(tris[k]);
+                }
+                for (let k = 0; k < data.vertices.length; k++) {
+                    vertices.push(data.vertices[k]);
                 }
             }
             else {
-                getData(GeoJson.features[i].geometry.coordinates, vertices, indices);
+                for (let j = 0; j < GeoJson.features[i].geometry.coordinates.length; j++) {
+                    ensureWinding(GeoJson.features[i].geometry.coordinates[j]);
+                    let data = flatten(GeoJson.features[i].geometry.coordinates[j]);
+                    let tris = earcut(data.vertices, data.holes, data.dimensions);
+                    for (let k = 0; k < tris.length; k++) {
+                        indices.push(tris[k] + vertices.length / 2);
+                    }
+                    for (let k = 0; k < data.vertices.length; k++) {
+                        vertices.push(data.vertices[k]);
+                    }
+                }
             }
 
+
+            let VAO = this.gl.createVertexArray();
+            this.gl.bindVertexArray(VAO);
+
+            let VBO = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, VBO);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertices), this.gl.STATIC_DRAW);
+
+            let EBO = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, EBO);
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
+
+            let positionLocation = this.gl.getAttribLocation(this.geoProgram, "a_position");
+            this.gl.enableVertexAttribArray(positionLocation);
+            this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 4*2, 0);
+
             this.geoData.push({
+                vao: VAO,
                 name: GeoJson.features[i].properties.name,
                 vertices: vertices,
                 indices: indices
@@ -140,15 +291,15 @@ var gfx = {
         return this.gl;
     },
 
-    clear : function() {
+    clear : function(color, width, height) {
         // Set clear color to black, fully opaque
-        this.gl.clearColor(0.357, 0.753, 1.0, 1.0);
+        this.gl.clearColor(color[0], color[1], color[2], color[3]);
         // Clear the color buffer with specified clear color
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        this.gl.disable(this.gl.DEPTH_TEST);
+        //this.gl.disable(this.gl.DEPTH_TEST);
 
-        this.gl.viewport(0,0,this.gl.canvas.width,this.gl.canvas.height);
+        this.gl.viewport(0,0,width,height);
     },
 
     getUniformLocation : function(program, name) {
@@ -210,7 +361,6 @@ var gfx = {
             this.imageTextures.get(imageSrc).loaded = true;
         };
 
-        console.log("test");
         return texture;
     },
 
@@ -221,8 +371,12 @@ var gfx = {
         return this.createTexture(imageSrc);
     },
 
-    translate : function(x, y, z) {
+    resetMatrix : function() {
         this.modelMatrix = mat4.create();
+    },
+
+    translate : function(x, y, z) {
+        //this.modelMatrix = mat4.create();
         mat4.translate(this.modelMatrix, this.modelMatrix, [x - this.canvas.width / 2, this.canvas.height / 2 - y, -1000.0 + z]);
     },
     rotate : function(rotation, axis) {
@@ -337,6 +491,18 @@ var gfx = {
         this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
     },
 
+    drawIslands : function() {
+        this.gl.useProgram(this.geoProgram);
+
+        this.gl.uniformMatrix4fv(this.getUniformLocation(this.geoProgram, "proj"), false, this.projMatrix);
+        this.gl.uniformMatrix4fv(this.getUniformLocation(this.geoProgram, "model"), false, this.modelMatrix);
+
+        for (let i = 0; i < this.geoData.length; i++) {
+            this.gl.bindVertexArray(this.geoData[i].vao);
+            this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+    },
+
     drawPlanet : function() {
 
         this.gl.useProgram(this.planetProgram);
@@ -353,13 +519,13 @@ var gfx = {
         this.gl.uniform2fv(this.getUniformLocation(this.planetProgram, "iMouse"), [this.mousePos.x, this.mousePos.y]);
         this.gl.uniform1f(this.getUniformLocation(this.planetProgram, "Zoom"), this.zoom);
 
-        let Channel0 = gfx.getTexture("map");
+        let Channel0 = gfx.getIslandsFramebuffer();//gfx.getTexture("map");
         let Channel1 = gfx.getTexture("cloud");
         let Channel2 = gfx.getTexture("light");
 
-        if (!Channel0.loaded || !Channel1.loaded || !Channel2.loaded) {
-            return;
-        }
+        // if (!Channel0.loaded || !Channel1.loaded || !Channel2.loaded) {
+        //     return;
+        // }
 
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, Channel0.texture);
@@ -372,7 +538,6 @@ var gfx = {
 
         this.gl.bindVertexArray(this.squareVAO);
         this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
-
     }
 }
 
@@ -385,9 +550,28 @@ const squareVertices = new Float32Array([
 
 // Two triangles
 const squareIndices = new Uint16Array([
-    0, 1, 2,
-    0, 2, 3
+    2, 1, 0,
+    3, 2, 0
 ]);
+
+const vsGeo = `
+    attribute vec2 a_position;
+
+    uniform mat4 model;
+    uniform mat4 proj;
+
+    void main() {
+        gl_Position = proj * model * vec4(a_position.x, a_position.y, 0.0, 1.0);
+    }
+`;
+
+const fsGeo = `
+    precision mediump float;
+
+    void main() {
+        gl_FragColor = vec4(0.114, 0.651, 0.0,1.0);
+    }
+`;
 
 // Vertex shader
 const vsSource = `
