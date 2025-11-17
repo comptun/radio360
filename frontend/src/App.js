@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import Canvas from './Canvas';
 import gfx from './gfx';
-
+import station from './data/stations.json'
 
 let mouse = { "x": 0, "y": 0 };
 let zoom = 1;
 let zoomExp = 0;
 
 let dragging = false;
+let init = false;
 
 window.addEventListener("wheel", (event) => { 
   let delta = event.deltaY * 0.01;
@@ -29,6 +30,28 @@ window.addEventListener("mousemove", (e) => {
     }
 });
 
+function InitStations() {
+  let index = 0;
+  for (let countryId = 0; countryId < station.length; countryId++) {
+    for (let stationId = 0; stationId < station[countryId]["stations"].length; stationId++) {
+
+      let data = station[countryId]["stations"][stationId];
+
+      if (index < 3) {
+        document.getElementById("stn-list").innerHTML += 
+        data["name"] +
+        `<audio controls>
+          <source src=`+ data["stream"] + ` type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>`;
+      }
+
+      gfx.addStationPoint(data["lat"], data["lon"]);
+
+      index += 1;
+    }
+  }
+}
 
 function App() {
   const [message, setMessage] = useState("Loading...");
@@ -48,14 +71,21 @@ function App() {
     gfx.setMousePos(mouse);
     gfx.setZoom(zoom);
 
-    gfx.bindFramebuffer(gfx.getIslandsFramebuffer().framebuffer);
-    gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().y*2000,gfx.getMapScale().y*2000);
-    
-    gfx.resetMatrix();
-    gfx.scale(gfx.getMapScale().x, -gfx.getMapScale().y);
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 1);
-    gfx.rotate(0, [0,0,0]);
-    gfx.drawIslands();
+    if (!init) {
+      init = true;
+
+      InitStations();
+      gfx.createStations();
+
+      gfx.bindFramebuffer(gfx.getIslandsFramebuffer().framebuffer);
+      gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().y*2000,gfx.getMapScale().y*2000);
+      
+      gfx.resetMatrix();
+      gfx.scale(gfx.getMapScale().x, -gfx.getMapScale().y);
+      gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
+      gfx.rotate(0, [0,0,0]);
+      gfx.drawIslands();
+    }
 
     gfx.bindFramebuffer(null);
     gfx.clear([1.0,1.0,1.0,1.0], gfx.canvas.width, gfx.canvas.height);
@@ -65,6 +95,15 @@ function App() {
     gfx.rotate(0, [0,0,0]);
     gfx.scale(gfx.canvas.width, gfx.canvas.height);
     gfx.drawPlanet();
+
+
+
+    gfx.resetMatrix();
+    gfx.scale(620 * 1.0 / zoom, 620 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 1);
+    gfx.rotate(-mouse.y, [1,0,0]);
+    gfx.rotate(mouse.x, [0,1,0]);
+    gfx.drawStations();
 
 
     // gfx.bindFramebuffer(null);

@@ -9,13 +9,26 @@
         integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
         crossorigin="anonymous" defer>
     </script>
+
+    <style>
+      .station-list {
+        position:absolute;
+        height: 95%;
+        width: 300px;
+        background-color:white;
+        z-index:1000;
+        margin-top: 2.5%;
+        margin-left: 20px;
+        opacity: 0.5;
+      }
+    </style>
+
   </head>
   <body style="margin: 0; overflow: hidden">
-    <div id="root"></div>
+    <div id="stn-list" class="station-list">
 
-    <audio controls>
-      <source src="http://lt15concordia.radioca.st/stream" type="audio/mpeg">
-      Your browser does not support the audio element.
-    </audio>
+    </div>
+    <div id="root"></div>
+    
   </body>
 </html>

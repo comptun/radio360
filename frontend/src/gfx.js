@@ -82,6 +82,7 @@ var gfx = {
         this.sphereProgram = this.createShaderProgram(vsSphere, fsSphere);
         this.planetProgram = this.createShaderProgram(vsSphere, fsPlanet);
         this.geoProgram = this.createShaderProgram(vsGeo, fsGeo);
+        this.pointProgram = this.createShaderProgram(vsPoint, fsPoint);
 
         this.squareVAO = this.gl.createVertexArray();
         this.gl.bindVertexArray(this.squareVAO);
@@ -138,6 +139,40 @@ var gfx = {
         this.islandsFramebuffer = this.createFramebuffer();
         
         this.readGeoData();
+
+        this.stationPoints = [];
+        this.stationVAO = null;
+    },
+
+    addStationPoint : function(x, y) {
+        this.stationPoints.push(x);
+        this.stationPoints.push(y);
+    },
+
+    createStations : function() {
+        this.stationVAO = this.gl.createVertexArray();
+        this.gl.bindVertexArray(this.stationVAO);
+
+        let VBO = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, VBO);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.stationPoints), this.gl.STATIC_DRAW);
+
+        let positionLocation = this.gl.getAttribLocation(this.geoProgram, "a_position");
+        this.gl.enableVertexAttribArray(positionLocation);
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 4*2, 0);
+
+        this.gl.bindVertexArray(null);
+    },
+
+    drawStations : function() {
+        this.gl.useProgram(this.pointProgram);
+
+        this.gl.uniform1f(this.getUniformLocation(this.pointProgram, "zoom"), false, this.zoom);
+        this.gl.uniformMatrix4fv(this.getUniformLocation(this.pointProgram, "proj"), false, this.projMatrix);
+        this.gl.uniformMatrix4fv(this.getUniformLocation(this.pointProgram, "model"), false, this.modelMatrix);
+
+        this.gl.bindVertexArray(this.stationVAO);
+        this.gl.drawArrays(this.gl.POINTS, 0, this.stationPoints.length);
     },
 
     getIslandsFramebuffer : function() {
@@ -581,6 +616,54 @@ const squareIndices = new Uint16Array([
     2, 1, 0,
     3, 2, 0
 ]);
+
+
+
+const vsPoint = `
+    attribute vec2 a_position;
+
+    uniform mat4 model;
+    uniform mat4 proj;
+    uniform float zoom;
+
+    const float DEG2RAD = 3.141592653589793 / 180.0;
+    float radius = 1.0;
+
+    void main() {
+
+        float lon = a_position.x * DEG2RAD;
+        float lat = a_position.y * DEG2RAD;
+
+        // convert spherical to Cartesian
+        float x = radius * cos(lat) * cos(lon);
+        float y = radius * sin(lat);
+        float z = radius * cos(lat) * sin(lon);
+
+        vec3 position = vec3(x, y, z);
+
+        gl_Position = proj * model * vec4(position, 1.0);
+        gl_PointSize = 12.0; // set pixel radius of the vertex
+    }
+`;
+
+const fsPoint = `
+    precision mediump float;
+
+    void main() {
+        // Convert fragment coordinate to [-1,1] range
+        vec2 p = gl_PointCoord * 2.0 - 1.0;
+
+        // Kill fragments outside the circle radius
+        if (dot(p, p) > 1.0) {
+            discard;
+        }
+
+        gl_FragColor = vec4(1.0, 0.6, 0.0, 1.0); // orange point
+    }
+`;
+
+
+
 
 const vsGeo2 = `
     attribute vec2 a_position;
