@@ -79,8 +79,8 @@ const fsPlanet = `
         // float U = 1.0-atan(Normal.z, Normal.x) / (2.0*Pi);
         // float V = 1.0-(atan(length(Normal.xz), Normal.y)) / Pi;
         vec3 Ground = pow(texture2D(iChannel0, vec2(U, V)).xyz, vec3(2.22));
-        vec3 Cloud  = pow(texture2D(iChannel1, vec2(U, V)).xyz, vec3(2.22));
-        vec3 Cloud2 = pow(texture2D(iChannel1, vec2(U, V)).xyz, vec3(2.22));
+        vec3 Cloud  = vec3(0,0,0);//pow(texture2D(iChannel1, vec2(U, V)).xyz, vec3(2.22));
+        vec3 Cloud2 = vec3(0,0,0);//pow(texture2D(iChannel1, vec2(U, V)).xyz, vec3(2.22));
         vec3 KsMap  = pow(texture2D(iChannel1, vec2( 0.0, 0.8)).xyz, vec3(2.22));
         vec3 Night  = pow(texture2D(iChannel2, vec2(U, V)).xyz, vec3(2.22));
         

@@ -29,6 +29,7 @@ window.addEventListener("mousemove", (e) => {
     }
 });
 
+
 function App() {
   const [message, setMessage] = useState("Loading...");
 
@@ -48,7 +49,7 @@ function App() {
     gfx.setZoom(zoom);
 
     gfx.bindFramebuffer(gfx.getIslandsFramebuffer().framebuffer);
-    gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().x*2000,gfx.getMapScale().y*2000);
+    gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().y*2000,gfx.getMapScale().y*2000);
     
     gfx.resetMatrix();
     gfx.scale(gfx.getMapScale().x, -gfx.getMapScale().y);
@@ -64,6 +65,19 @@ function App() {
     gfx.rotate(0, [0,0,0]);
     gfx.scale(gfx.canvas.width, gfx.canvas.height);
     gfx.drawPlanet();
+
+
+    // gfx.bindFramebuffer(null);
+    // gfx.clear([0.4,0.6,1.0,1.0], gfx.canvas.width,gfx.canvas.height);
+    
+    // gfx.resetMatrix();
+    // gfx.scale(100 * zoom, 100 * zoom);
+    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 1);
+    // gfx.rotate(-mouse.y, [1,0,0]);
+    // gfx.rotate(mouse.x, [0,1,0]);
+    
+    // gfx.drawIslands();
+
   }
 
   return (

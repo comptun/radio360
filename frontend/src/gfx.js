@@ -3,23 +3,51 @@ import ImageList from './image_list';
 import GeoJson from './data/countries.json';
 import { earcut, flatten } from './earcut';
 
-function ensureWinding(coords) {
-    // coords = array of rings [[x,y], [x,y], ...]
-    // outer ring should be CCW
-    if (ringArea(coords[0]) < 0) coords[0].reverse();
 
-    // holes should be CW
-    for (let i = 1; i < coords.length; i++) {
-        if (ringArea(coords[i]) > 0) coords[i].reverse();
-    }
+function toVec3(lat, lon) {
+  lat = lat * Math.PI/180;
+  lon = lon * Math.PI/180;
+  return new THREE.Vector3(
+    Math.cos(lat) * Math.cos(lon),
+    Math.cos(lat) * Math.sin(lon),
+    Math.sin(lat)
+  );
 }
 
-function ringArea(points) {
-    let area = 0;
-    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-        area += (points[j][0] * points[i][1] - points[i][0] * points[j][1]);
-    }
-    return area / 2;
+function toLatLon(v) {
+  const lat = Math.atan2(v.z, Math.sqrt(v.x*v.x + v.y*v.y)) * 180/Math.PI;
+  const lon = Math.atan2(v.y, v.x) * 180/Math.PI;
+  return { lat, lon };
+}
+
+function slerp(a, b, t) {
+  const dot = a.dot(b);
+  const theta = Math.acos(dot);
+  const sinTheta = Math.sin(theta);
+
+  const w1 = Math.sin((1 - t) * theta) / sinTheta;
+  const w2 = Math.sin(t * theta) / sinTheta;
+
+  return new THREE.Vector3(
+    a.x * w1 + b.x * w2,
+    a.y * w1 + b.y * w2,
+    a.z * w1 + b.z * w2
+  ).normalize();
+}
+
+function subdivideGreatCircle(lat1, lon1, lat2, lon2, segments = 10) {
+  const a = toVec3(lat1, lon1);
+  const b = toVec3(lat2, lon2);
+
+  const points = [];
+
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const v = slerp(a, b, t);
+    points.push(toLatLon(v));
+  }
+
+  return points;
 }
 
 var gfx = {
@@ -121,7 +149,7 @@ var gfx = {
     },
 
     createFramebuffer : function() {
-        let width = this.mapScale.x*2000;//this.canvas.width;
+        let width = this.mapScale.y*2000;//this.canvas.width;
         let height = this.mapScale.y*2000;//this.canvas.height;
         console.log(width);
         console.log(height);
@@ -140,8 +168,8 @@ var gfx = {
         );
 
         // Required texture parameters for FBO attachments
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
 
@@ -219,7 +247,7 @@ var gfx = {
             let vertices = [];
 
             if (GeoJson.features[i].geometry.type != "MultiPolygon") {
-                ensureWinding(GeoJson.features[i].geometry.coordinates);
+                //ensureWinding(GeoJson.features[i].geometry.coordinates);
                 let data = flatten(GeoJson.features[i].geometry.coordinates);
                 let tris = earcut(data.vertices, data.holes, data.dimensions);
                 for (let k = 0; k < tris.length; k++) {
@@ -231,7 +259,7 @@ var gfx = {
             }
             else {
                 for (let j = 0; j < GeoJson.features[i].geometry.coordinates.length; j++) {
-                    ensureWinding(GeoJson.features[i].geometry.coordinates[j]);
+                    //ensureWinding(GeoJson.features[i].geometry.coordinates[j]);
                     let data = flatten(GeoJson.features[i].geometry.coordinates[j]);
                     let tris = earcut(data.vertices, data.holes, data.dimensions);
                     for (let k = 0; k < tris.length; k++) {
@@ -553,6 +581,27 @@ const squareIndices = new Uint16Array([
     2, 1, 0,
     3, 2, 0
 ]);
+
+const vsGeo2 = `
+    attribute vec2 a_position;
+
+    uniform mat4 model;
+    uniform mat4 proj;
+
+    void main() {
+        float radius = 1.0;
+        float lon = radians(a_position.x);
+        float lat = radians(a_position.y);
+
+        float x = cos(lat) * cos(lon);
+        float y = sin(lat);
+        float z = cos(lat) * sin(lon);
+
+        vec3 spherePos = vec3(x, y, z) * radius;
+
+        gl_Position = proj * model * vec4(spherePos, 1.0);
+    }
+`;
 
 const vsGeo = `
     attribute vec2 a_position;
