@@ -4,8 +4,10 @@ import gfx from './gfx';
 import station from './data/stations.json'
 
 let mouse = { "x": 0, "y": 0 };
+let mousePos = vec2;
 let zoom = 1;
 let zoomExp = 0;
+let playingSound = new Audio();
 
 let dragging = false;
 let init = false;
@@ -19,7 +21,23 @@ window.addEventListener("wheel", (event) => {
 window.addEventListener("mousedown", () => dragging = true);
 window.addEventListener("mouseup", () => dragging = false);
 
+window.addEventListener("click", (event) => {
+  let data = gfx.clickScreen(mousePos);
+
+  if (data != null) {
+    playingSound.src = data["stream"];
+    playingSound.load();
+    playingSound.play();
+    console.log("playing");
+
+    document.getElementById("station-name").innerHTML = data["name"];
+    document.getElementById("station-location").innerHTML = data["location"];
+    document.getElementById("station-stream").innerHTML = data["stream"];
+  }
+});
+
 window.addEventListener("mousemove", (e) => {
+    mousePos = {"x":e.clientX, "y":e.clientY};
     if (dragging) {
         mouse.x   += e.movementX * 0.005;
         mouse.y -= e.movementY * 0.005;
@@ -37,17 +55,7 @@ function InitStations() {
 
       let data = station[countryId]["stations"][stationId];
 
-      if (index < 3) {
-        document.getElementById("stn-list").innerHTML += 
-        data["name"] +
-        `<audio controls>
-          <source src=`+ data["stream"] + ` type="audio/mpeg">
-          Your browser does not support the audio element.
-        </audio>`;
-      }
-
-      gfx.addStationPoint(data["lat"], data["lon"]);
-
+      gfx.addStationPoint(data["lon"], data["lat"], data);
       index += 1;
     }
   }
@@ -68,7 +76,8 @@ function App() {
 
   const draw = (frameCount) => {
 
-    gfx.setMousePos(mouse);
+    gfx.setMouseDelta(mouse);
+    gfx.setMousePos(mousePos);
     gfx.setZoom(zoom);
 
     if (!init) {
@@ -99,10 +108,11 @@ function App() {
 
 
     gfx.resetMatrix();
-    gfx.scale(620 * 1.0 / zoom, 620 * 1.0 / zoom);
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 1);
+    gfx.scale(gfx.canvas.height * 0.48 * 1.0 / zoom, gfx.canvas.height * 0.48 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 2);
     gfx.rotate(-mouse.y, [1,0,0]);
     gfx.rotate(mouse.x, [0,1,0]);
+    //gfx.rotate(90.0, [1,0,0]);
     gfx.drawStations();
 
 

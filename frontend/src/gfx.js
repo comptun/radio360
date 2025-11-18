@@ -106,6 +106,7 @@ var gfx = {
         this.imageTextures = new Map();
         this.uniformLocations = new Map();
 
+        this.mouseDelta = {"x": 0, "y": 0};
         this.mousePos = {"x": 0, "y": 0};
         this.zoom = 1;
 
@@ -141,15 +142,96 @@ var gfx = {
         this.readGeoData();
 
         this.stationPoints = [];
+        this.stationData = [];
         this.stationVAO = null;
     },
 
-    addStationPoint : function(x, y) {
+    projectToScreen(point, modelMatrix, projMatrix) {
+        // 1. Convert point to vec4
+        const p = vec4.fromValues(point[0], point[1], point[2], 1.0);
+
+        const view  = mat4.create();   // camera doesn’t move
+        // proj must be your real projection matrix
+        // e.g., mat4.perspective(proj, fov, aspect, near, far);
+
+        const mvp = mat4.create();
+        mat4.multiply(mvp, modelMatrix, p);    // world pos (same as pos if model = identity)
+        mat4.multiply(mvp, view, mvp);     // unchanged since view = identity
+        mat4.multiply(mvp, projMatrix, mvp);     // clip = proj * pos
+
+        // Actually transform in one call:
+        const clip = vec4.create();
+        vec4.transformMat4(clip, p, projMatrix);
+
+        // 3. Perspective divide → NDC
+        const ndc = [
+            mvp[0] / mvp[3],
+            mvp[1] / mvp[3],
+            mvp[2] / mvp[3]
+        ];
+
+        // 4. NDC → screen coordinates (pixels)
+        const x = ndc[0] * this.canvas.width;
+        const y = ndc[1] * this.canvas.height; // flip Y for canvas
+        const z = ndc[2]; // depth (0..1)
+
+        return { x, y, z };
+    },
+
+    clickScreen(Pos) {
+        for (let i = 0; i < this.stationPoints.length-1; i+=2) {
+
+            let DEG2RAD = 3.141592653589793 / 180.0;
+            let radius = 1.0;
+
+            let lon = (this.stationPoints[i]-180.0) * DEG2RAD;
+            let lat = this.stationPoints[i+1] * DEG2RAD;
+
+            lat += lat / 30.0;
+
+            let x = radius * Math.cos(lat) * Math.cos(lon);
+            let y = radius * Math.sin(lat);
+            let z = radius * Math.cos(lat) * Math.sin(lon);
+
+            this.resetMatrix();
+            this.scale(this.canvas.height * 0.48 * this.zoom/2, this.canvas.height * 0.48 * this.zoom/2);
+            this.translate(this.canvas.width / 2, this.canvas.height / 2, 1);
+            this.rotate(-this.mouseDelta.y, [1,0,0]);
+            this.rotate(this.mouseDelta.x, [0,1,0]);
+
+            let worldPos = mat4.create();
+            mat4.multiply(worldPos, this.modelMatrix, vec4.fromValues(x,y,z,1.0));
+            
+            if (worldPos[2] > -998.1) {
+                continue;
+            }
+
+            let coords = this.projectToScreen([x,y,z], this.modelMatrix, this.projMatrix);
+            coords.x *= Math.pow(1.0 / this.zoom, 2);
+            coords.y *= Math.pow(1.0 / this.zoom, 2);
+
+            let mx = Pos.x - this.canvas.width / 2.0;
+            let my = -Pos.y + this.canvas.height / 2.0;
+
+            const dx = (coords.x - mx);
+            const dy = (coords.y - my);
+            const pxDist = Math.sqrt(dx*dx + dy*dy);
+
+            if (pxDist < 20.0) {
+                return this.stationData[i / 2];
+            }
+        }
+        return null;
+    },
+
+    addStationPoint : function(x, y, data) {
         this.stationPoints.push(x);
         this.stationPoints.push(y);
+        this.stationData.push(data);
     },
 
     createStations : function() {
+        console.log(this.stationPoints);
         this.stationVAO = this.gl.createVertexArray();
         this.gl.bindVertexArray(this.stationVAO);
 
@@ -170,6 +252,12 @@ var gfx = {
         this.gl.uniform1f(this.getUniformLocation(this.pointProgram, "zoom"), false, this.zoom);
         this.gl.uniformMatrix4fv(this.getUniformLocation(this.pointProgram, "proj"), false, this.projMatrix);
         this.gl.uniformMatrix4fv(this.getUniformLocation(this.pointProgram, "model"), false, this.modelMatrix);
+
+        let mx = ((this.mousePos.x / this.canvas.width) * 2.0 - 1.0) * this.canvas.width;
+        let my = (1.0 - (this.mousePos.y / this.canvas.height) * 2.0) * this.canvas.height; // flip Y
+
+        this.gl.uniform2fv(this.getUniformLocation(this.pointProgram, "mouse"), [mx,my]);
+        this.gl.uniform2fv(this.getUniformLocation(this.pointProgram, "viewportSize"), [this.canvas.width,this.canvas.height]);
 
         this.gl.bindVertexArray(this.stationVAO);
         this.gl.drawArrays(this.gl.POINTS, 0, this.stationPoints.length);
@@ -329,6 +417,10 @@ var gfx = {
                 indices: indices
             })
         }
+    },
+
+    setMouseDelta : function(Pos) {
+        this.mouseDelta = Pos;
     },
 
     setMousePos : function(Pos) {
@@ -579,7 +671,7 @@ var gfx = {
         this.gl.uniform1i(this.getUniformLocation(this.planetProgram, "iChannel0"), 0);
         this.gl.uniform1i(this.getUniformLocation(this.planetProgram, "iChannel1"), 1);
         this.gl.uniform1i(this.getUniformLocation(this.planetProgram, "iChannel2"), 2);
-        this.gl.uniform2fv(this.getUniformLocation(this.planetProgram, "iMouse"), [this.mousePos.x, this.mousePos.y]);
+        this.gl.uniform2fv(this.getUniformLocation(this.planetProgram, "iMouse"), [this.mouseDelta.x, this.mouseDelta.y]);
         this.gl.uniform1f(this.getUniformLocation(this.planetProgram, "Zoom"), this.zoom);
 
         let Channel0 = gfx.getIslandsFramebuffer();//gfx.getTexture("map");
@@ -626,13 +718,18 @@ const vsPoint = `
     uniform mat4 proj;
     uniform float zoom;
 
+    uniform vec2 mouse;
+    uniform vec2 viewportSize;
+
     const float DEG2RAD = 3.141592653589793 / 180.0;
     float radius = 1.0;
 
     void main() {
 
-        float lon = a_position.x * DEG2RAD;
+        float lon = (a_position.x-180.0) * DEG2RAD;
         float lat = a_position.y * DEG2RAD;
+
+        lat += lat / 30.0;
 
         // convert spherical to Cartesian
         float x = radius * cos(lat) * cos(lon);
@@ -641,8 +738,40 @@ const vsPoint = `
 
         vec3 position = vec3(x, y, z);
 
-        gl_Position = proj * model * vec4(position, 1.0);
-        gl_PointSize = 12.0; // set pixel radius of the vertex
+        vec3 normalLocal = normalize(position);
+        vec3 normalWorld = normalize((model * vec4(normalLocal, 0.0)).xyz);
+
+        vec3 worldPos = (model * vec4(position, 1.0)).xyz;
+
+        if (worldPos.z < -998.1) {
+
+            vec4 clip = proj * model * vec4(position, 1.0);
+            vec3 ndc = clip.xyz / clip.w;
+
+            vec2 pointPx;
+            pointPx.x = ndc.x * viewportSize.x;
+            pointPx.y = ndc.y * viewportSize.y;
+
+            float pxDist = distance(pointPx,mouse);
+
+            // choose sizes
+            float base = 8.0;
+            float highlight = 40.0;
+            float radiusPx = 40.0;  // area where it grows
+
+            float size = base;
+            if (pxDist < radiusPx) {
+                float t = 1.0 - pxDist / radiusPx;
+                size = mix(base, highlight, t);
+            }
+
+            gl_Position = clip;
+            gl_PointSize = size; // set pixel radius of the vertex
+            return;
+        }
+
+        gl_PointSize = 0.0;
+        gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     }
 `;
 
