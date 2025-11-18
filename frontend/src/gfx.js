@@ -4,6 +4,23 @@ import GeoJson from './data/countries.json';
 import { earcut, flatten } from './earcut';
 
 
+function subdivideTriangle(a, b, c, depth) {
+    if (depth === 0) return [a, b, c];
+
+    // midpoints
+    const ab = [(a[0]+b[0])*0.5, (a[1]+b[1])*0.5];
+    const bc = [(b[0]+c[0])*0.5, (b[1]+c[1])*0.5];
+    const ca = [(c[0]+a[0])*0.5, (c[1]+a[1])*0.5];
+
+    return [
+        ...subdivideTriangle(a, ab, ca, depth - 1),  // top left
+        ...subdivideTriangle(ab, b, bc, depth - 1),  // top right
+        ...subdivideTriangle(ca, bc, c, depth - 1),  // bottom
+        ...subdivideTriangle(ab, bc, ca, depth - 1)  // center
+    ];
+}
+
+
 function toVec3(lat, lon) {
   lat = lat * Math.PI/180;
   lon = lon * Math.PI/180;
@@ -81,7 +98,7 @@ var gfx = {
         this.floorProgram = this.createShaderProgram(vsBackgroundSource, fsGround);
         this.sphereProgram = this.createShaderProgram(vsSphere, fsSphere);
         this.planetProgram = this.createShaderProgram(vsSphere, fsPlanet);
-        this.geoProgram = this.createShaderProgram(vsGeo, fsGeo);
+        this.geoProgram = this.createShaderProgram(vsGeo2, fsGeo);
         this.pointProgram = this.createShaderProgram(vsPoint, fsPoint);
 
         this.squareVAO = this.gl.createVertexArray();
@@ -184,25 +201,25 @@ var gfx = {
             let DEG2RAD = 3.141592653589793 / 180.0;
             let radius = 1.0;
 
-            let lon = (this.stationPoints[i]-180.0) * DEG2RAD;
+            let lon = this.stationPoints[i] * DEG2RAD;
             let lat = this.stationPoints[i+1] * DEG2RAD;
 
-            lat += lat / 30.0;
+            //lat += lat / 30.0;
 
             let x = radius * Math.cos(lat) * Math.cos(lon);
             let y = radius * Math.sin(lat);
             let z = radius * Math.cos(lat) * Math.sin(lon);
 
             this.resetMatrix();
-            this.scale(this.canvas.height * 0.48 * this.zoom/2, this.canvas.height * 0.48 * this.zoom/2);
+            this.scale(-this.canvas.height * 0.48 * this.zoom/2, this.canvas.height * 0.48 * this.zoom/2);
             this.translate(this.canvas.width / 2, this.canvas.height / 2, 1);
-            this.rotate(-this.mouseDelta.y, [1,0,0]);
+            this.rotate(this.mouseDelta.y, [1,0,0]);
             this.rotate(this.mouseDelta.x, [0,1,0]);
 
             let worldPos = mat4.create();
             mat4.multiply(worldPos, this.modelMatrix, vec4.fromValues(x,y,z,1.0));
             
-            if (worldPos[2] > -998.1) {
+            if (worldPos[2] > -990.1) {
                 continue;
             }
 
@@ -272,7 +289,7 @@ var gfx = {
     },
 
     createFramebuffer : function() {
-        let width = this.mapScale.y*2000;//this.canvas.width;
+        let width = this.mapScale.x*2000;//this.canvas.width;
         let height = this.mapScale.y*2000;//this.canvas.height;
         console.log(width);
         console.log(height);
@@ -364,36 +381,38 @@ var gfx = {
 
     readGeoData : function() {
 
-        for (let i = 0; i < GeoJson.features.length; i++) {
+        let read = (coords, name) => {
 
             let indices = [];
             let vertices = [];
 
-            if (GeoJson.features[i].geometry.type != "MultiPolygon") {
-                //ensureWinding(GeoJson.features[i].geometry.coordinates);
-                let data = flatten(GeoJson.features[i].geometry.coordinates);
-                let tris = earcut(data.vertices, data.holes, data.dimensions);
-                for (let k = 0; k < tris.length; k++) {
-                    indices.push(tris[k]);
-                }
-                for (let k = 0; k < data.vertices.length; k++) {
-                    vertices.push(data.vertices[k]);
-                }
-            }
-            else {
-                for (let j = 0; j < GeoJson.features[i].geometry.coordinates.length; j++) {
-                    //ensureWinding(GeoJson.features[i].geometry.coordinates[j]);
-                    let data = flatten(GeoJson.features[i].geometry.coordinates[j]);
-                    let tris = earcut(data.vertices, data.holes, data.dimensions);
-                    for (let k = 0; k < tris.length; k++) {
-                        indices.push(tris[k] + vertices.length / 2);
-                    }
-                    for (let k = 0; k < data.vertices.length; k++) {
-                        vertices.push(data.vertices[k]);
-                    }
-                }
-            }
+            let data = flatten(coords);
+            let tris = earcut(data.vertices, data.holes, data.dimensions);
+            // for (let k = 0; k < tris.length; k++) {
+            //     indices.push(tris[k]);
+            // }
+            // for (let k = 0; k < data.vertices.length; k++) {
+            //     vertices.push(data.vertices[k]);
+            // }
 
+            for (let t = 0; t < tris.length; t += 3) {
+                const i0 = tris[t+0] * 2;
+                const i1 = tris[t+1] * 2;
+                const i2 = tris[t+2] * 2;
+
+                const a = [data.vertices[i0],     data.vertices[i0+1]];
+                const b = [data.vertices[i1],     data.vertices[i1+1]];
+                const c = [data.vertices[i2],     data.vertices[i2+1]];
+
+                // SUBDIVIDE IT HERE (depth 1 or 2)
+                const subdivided = subdivideTriangle(a, b, c, 2);
+
+                // Flatten into the final vertex list
+                for (let v = 0; v < subdivided.length; v++) {
+                    vertices.push(subdivided[v][0]);
+                    vertices.push(subdivided[v][1]);
+                }
+            }
 
             let VAO = this.gl.createVertexArray();
             this.gl.bindVertexArray(VAO);
@@ -402,9 +421,9 @@ var gfx = {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, VBO);
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertices), this.gl.STATIC_DRAW);
 
-            let EBO = this.gl.createBuffer();
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, EBO);
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
+            // let EBO = this.gl.createBuffer();
+            // this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, EBO);
+            // this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
 
             let positionLocation = this.gl.getAttribLocation(this.geoProgram, "a_position");
             this.gl.enableVertexAttribArray(positionLocation);
@@ -412,10 +431,24 @@ var gfx = {
 
             this.geoData.push({
                 vao: VAO,
-                name: GeoJson.features[i].properties.name,
+                name: name,
                 vertices: vertices,
                 indices: indices
-            })
+            });
+        }
+
+        for (let i = 0; i < GeoJson.features.length; i++) {
+
+            if (GeoJson.features[i].geometry.type != "MultiPolygon") {
+                read(GeoJson.features[i].geometry.coordinates, GeoJson.features[i].properties.name);
+            }
+            else {
+                for (let j = 0; j < GeoJson.features[i].geometry.coordinates.length; j++) {
+                    read(GeoJson.features[i].geometry.coordinates[j], GeoJson.features[i].properties.name);
+                }
+            }
+
+
         }
     },
 
@@ -654,7 +687,8 @@ var gfx = {
 
         for (let i = 0; i < this.geoData.length; i++) {
             this.gl.bindVertexArray(this.geoData[i].vao);
-            this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
+            //this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, this.geoData[i].vertices.length/2);
         }
     },
 
@@ -726,10 +760,10 @@ const vsPoint = `
 
     void main() {
 
-        float lon = (a_position.x-180.0) * DEG2RAD;
+        float lon = a_position.x * DEG2RAD;
         float lat = a_position.y * DEG2RAD;
 
-        lat += lat / 30.0;
+        //lat += lat / 30.0;
 
         // convert spherical to Cartesian
         float x = radius * cos(lat) * cos(lon);
@@ -743,7 +777,7 @@ const vsPoint = `
 
         vec3 worldPos = (model * vec4(position, 1.0)).xyz;
 
-        if (worldPos.z < -998.1) {
+        if (worldPos.z > -990.1) {
 
             vec4 clip = proj * model * vec4(position, 1.0);
             vec3 ndc = clip.xyz / clip.w;
@@ -830,7 +864,7 @@ const fsGeo = `
     precision mediump float;
 
     void main() {
-        gl_FragColor = vec4(0.114, 0.651, 0.0,1.0);
+        gl_FragColor = vec4(1.0, 1.0, 1.0,1.0);
     }
 `;
 

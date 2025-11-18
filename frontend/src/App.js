@@ -86,46 +86,51 @@ function App() {
       InitStations();
       gfx.createStations();
 
-      gfx.bindFramebuffer(gfx.getIslandsFramebuffer().framebuffer);
-      gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().y*2000,gfx.getMapScale().y*2000);
-      
-      gfx.resetMatrix();
-      gfx.scale(gfx.getMapScale().x, -gfx.getMapScale().y);
-      gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
-      gfx.rotate(0, [0,0,0]);
-      gfx.drawIslands();
     }
 
+    // gfx.bindFramebuffer(gfx.getIslandsFramebuffer().framebuffer);
+    // gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().x*2000,gfx.getMapScale().y*2000);
+    
+    // gfx.resetMatrix();
+    // gfx.scale(gfx.getMapScale().x * 1.0, -gfx.getMapScale().y * 1.0);
+    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
+    // gfx.rotate(0, [0,0,0]);
+    // gfx.drawIslands();
+
+    // gfx.bindFramebuffer(null);
+    // gfx.clear([1.0,1.0,1.0,1.0], gfx.canvas.width, gfx.canvas.height);
+
+    // gfx.resetMatrix();
+    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
+    // gfx.rotate(0, [0,0,0]);
+    // gfx.scale(gfx.canvas.width, gfx.canvas.height);
+    // gfx.drawPlanet();
+
     gfx.bindFramebuffer(null);
-    gfx.clear([1.0,1.0,1.0,1.0], gfx.canvas.width, gfx.canvas.height);
+
+    gfx.clear([0.0,0.0,0.0,1.0], gfx.canvas.width,gfx.canvas.height);
 
     gfx.resetMatrix();
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
-    gfx.rotate(0, [0,0,0]);
-    gfx.scale(gfx.canvas.width, gfx.canvas.height);
+    gfx.scale(gfx.canvas.height * 1.0 / zoom, gfx.canvas.height * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
+    
     gfx.drawPlanet();
-
-
+    
+    gfx.resetMatrix();
+    gfx.scale(-gfx.canvas.height * 0.47 * 1.0 / zoom, gfx.canvas.height * 0.47 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
+    gfx.rotate(mouse.y, [1,0,0]);
+    gfx.rotate(mouse.x, [0,1,0]);
+    
+    gfx.drawIslands();
 
     gfx.resetMatrix();
-    gfx.scale(gfx.canvas.height * 0.48 * 1.0 / zoom, gfx.canvas.height * 0.48 * 1.0 / zoom);
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 2);
-    gfx.rotate(-mouse.y, [1,0,0]);
+    gfx.scale(-gfx.canvas.height * 0.48 * 1.0 / zoom, gfx.canvas.height * 0.48 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 10);
+    gfx.rotate(mouse.y, [1,0,0]);
     gfx.rotate(mouse.x, [0,1,0]);
     //gfx.rotate(90.0, [1,0,0]);
     gfx.drawStations();
-
-
-    // gfx.bindFramebuffer(null);
-    // gfx.clear([0.4,0.6,1.0,1.0], gfx.canvas.width,gfx.canvas.height);
-    
-    // gfx.resetMatrix();
-    // gfx.scale(100 * zoom, 100 * zoom);
-    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 1);
-    // gfx.rotate(-mouse.y, [1,0,0]);
-    // gfx.rotate(mouse.x, [0,1,0]);
-    
-    // gfx.drawIslands();
 
   }
 
