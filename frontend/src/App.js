@@ -39,8 +39,8 @@ window.addEventListener("click", (event) => {
 window.addEventListener("mousemove", (e) => {
     mousePos = {"x":e.clientX, "y":e.clientY};
     if (dragging) {
-        mouse.x   += e.movementX * 0.005;
-        mouse.y -= e.movementY * 0.005;
+        mouse.x   += e.movementX * 0.005 * zoom;
+        mouse.y -= e.movementY * 0.005 * zoom;
 
 
         // clamp pitch so it never flips
@@ -117,12 +117,20 @@ function App() {
     gfx.drawPlanet();
     
     gfx.resetMatrix();
-    gfx.scale(-gfx.canvas.height * 0.47 * 1.0 / zoom, gfx.canvas.height * 0.47 * 1.0 / zoom);
+    gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
     gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
     gfx.rotate(mouse.y, [1,0,0]);
     gfx.rotate(mouse.x, [0,1,0]);
     
     gfx.drawIslands();
+
+    gfx.resetMatrix();
+    gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5.1);
+    gfx.rotate(mouse.y, [1,0,0]);
+    gfx.rotate(mouse.x, [0,1,0]);
+    
+    gfx.drawIslandsOutline();
 
     gfx.resetMatrix();
     gfx.scale(-gfx.canvas.height * 0.48 * 1.0 / zoom, gfx.canvas.height * 0.48 * 1.0 / zoom);

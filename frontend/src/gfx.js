@@ -150,6 +150,7 @@ var gfx = {
         this.currentProj = "ortho";
 
         this.geoData = [];
+        this.geoOutlineData = [];
 
         this.mapScale = null;
         this.getMapScale();
@@ -277,7 +278,7 @@ var gfx = {
         this.gl.uniform2fv(this.getUniformLocation(this.pointProgram, "viewportSize"), [this.canvas.width,this.canvas.height]);
 
         this.gl.bindVertexArray(this.stationVAO);
-        this.gl.drawArrays(this.gl.POINTS, 0, this.stationPoints.length);
+        this.gl.drawArrays(this.gl.POINTS, 0, this.stationPoints.length/2);
     },
 
     getIslandsFramebuffer : function() {
@@ -437,6 +438,35 @@ var gfx = {
             });
         }
 
+        let read2 = (coords, name) => {
+
+            let indices = [];
+            let vertices = [];
+            
+            for (let k = 0; k < coords.length; k++) {
+                vertices.push(coords[k][0]);
+                vertices.push(coords[k][1]);
+            }
+
+            let VAO = this.gl.createVertexArray();
+            this.gl.bindVertexArray(VAO);
+
+            let VBO = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, VBO);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertices), this.gl.STATIC_DRAW);
+
+            let positionLocation = this.gl.getAttribLocation(this.geoProgram, "a_position");
+            this.gl.enableVertexAttribArray(positionLocation);
+            this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 4*2, 0);
+
+            this.geoOutlineData.push({
+                vao: VAO,
+                name: name,
+                vertices: vertices,
+                indices: indices
+            });
+        }
+
         for (let i = 0; i < GeoJson.features.length; i++) {
 
             if (GeoJson.features[i].geometry.type != "MultiPolygon") {
@@ -447,8 +477,22 @@ var gfx = {
                     read(GeoJson.features[i].geometry.coordinates[j], GeoJson.features[i].properties.name);
                 }
             }
+        }
 
+        for (let i = 0; i < GeoJson.features.length; i++) {
 
+            if (GeoJson.features[i].geometry.type != "MultiPolygon") {
+                for (let k = 0; k < GeoJson.features[i].geometry.coordinates.length; k++) {
+                    read2(GeoJson.features[i].geometry.coordinates[k], GeoJson.features[i].properties.name);
+                }
+            }
+            else {
+                for (let j = 0; j < GeoJson.features[i].geometry.coordinates.length; j++) {
+                    for (let k = 0; k < GeoJson.features[i].geometry.coordinates[j].length; k++) {
+                        read2(GeoJson.features[i].geometry.coordinates[j][k], GeoJson.features[i].properties.name);
+                    }
+                }
+            }
         }
     },
 
@@ -684,11 +728,26 @@ var gfx = {
 
         this.gl.uniformMatrix4fv(this.getUniformLocation(this.geoProgram, "proj"), false, this.projMatrix);
         this.gl.uniformMatrix4fv(this.getUniformLocation(this.geoProgram, "model"), false, this.modelMatrix);
+        this.gl.uniform4fv(this.getUniformLocation(this.geoProgram, "color"), [1.0,1.0,1.0,1.0]);
 
         for (let i = 0; i < this.geoData.length; i++) {
             this.gl.bindVertexArray(this.geoData[i].vao);
             //this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.drawArrays(this.gl.TRIANGLES, 0, this.geoData[i].vertices.length/2);
+        }
+    },
+
+    drawIslandsOutline : function() {
+        this.gl.useProgram(this.geoProgram);
+
+        this.gl.uniformMatrix4fv(this.getUniformLocation(this.geoProgram, "proj"), false, this.projMatrix);
+        this.gl.uniformMatrix4fv(this.getUniformLocation(this.geoProgram, "model"), false, this.modelMatrix);
+        this.gl.uniform4fv(this.getUniformLocation(this.geoProgram, "color"), [0.62,0.62,0.62,1.0]);
+
+        for (let i = 0; i < this.geoOutlineData.length; i++) {
+            this.gl.bindVertexArray(this.geoOutlineData[i].vao);
+            //this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.drawArrays(this.gl.LINE_STRIP, 0, this.geoOutlineData[i].vertices.length/2);
         }
     },
 
@@ -863,8 +922,10 @@ const vsGeo = `
 const fsGeo = `
     precision mediump float;
 
+    uniform vec4 color;
+
     void main() {
-        gl_FragColor = vec4(1.0, 1.0, 1.0,1.0);
+        gl_FragColor = color;
     }
 `;
 
