@@ -48,6 +48,14 @@ window.addEventListener("mousemove", (e) => {
     }
 });
 
+async function loadUsers() {
+  const res = await fetch("/api/users");
+  const data = await res.json();
+  console.log(data);
+}
+
+loadUsers();
+
 function InitStations() {
   let index = 0;
   for (let countryId = 0; countryId < station.length; countryId++) {
@@ -87,24 +95,6 @@ function App() {
       gfx.createStations();
 
     }
-
-    // gfx.bindFramebuffer(gfx.getIslandsFramebuffer().framebuffer);
-    // gfx.clear([0.4,0.6,1.0,1.0], gfx.getMapScale().x*2000,gfx.getMapScale().y*2000);
-    
-    // gfx.resetMatrix();
-    // gfx.scale(gfx.getMapScale().x * 1.0, -gfx.getMapScale().y * 1.0);
-    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
-    // gfx.rotate(0, [0,0,0]);
-    // gfx.drawIslands();
-
-    // gfx.bindFramebuffer(null);
-    // gfx.clear([1.0,1.0,1.0,1.0], gfx.canvas.width, gfx.canvas.height);
-
-    // gfx.resetMatrix();
-    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 0);
-    // gfx.rotate(0, [0,0,0]);
-    // gfx.scale(gfx.canvas.width, gfx.canvas.height);
-    // gfx.drawPlanet();
 
     gfx.bindFramebuffer(null);
 
