@@ -20,53 +20,6 @@ function subdivideTriangle(a, b, c, depth) {
     ];
 }
 
-
-function toVec3(lat, lon) {
-  lat = lat * Math.PI/180;
-  lon = lon * Math.PI/180;
-  return new THREE.Vector3(
-    Math.cos(lat) * Math.cos(lon),
-    Math.cos(lat) * Math.sin(lon),
-    Math.sin(lat)
-  );
-}
-
-function toLatLon(v) {
-  const lat = Math.atan2(v.z, Math.sqrt(v.x*v.x + v.y*v.y)) * 180/Math.PI;
-  const lon = Math.atan2(v.y, v.x) * 180/Math.PI;
-  return { lat, lon };
-}
-
-function slerp(a, b, t) {
-  const dot = a.dot(b);
-  const theta = Math.acos(dot);
-  const sinTheta = Math.sin(theta);
-
-  const w1 = Math.sin((1 - t) * theta) / sinTheta;
-  const w2 = Math.sin(t * theta) / sinTheta;
-
-  return new THREE.Vector3(
-    a.x * w1 + b.x * w2,
-    a.y * w1 + b.y * w2,
-    a.z * w1 + b.z * w2
-  ).normalize();
-}
-
-function subdivideGreatCircle(lat1, lon1, lat2, lon2, segments = 10) {
-  const a = toVec3(lat1, lon1);
-  const b = toVec3(lat2, lon2);
-
-  const points = [];
-
-  for (let i = 0; i <= segments; i++) {
-    const t = i / segments;
-    const v = slerp(a, b, t);
-    points.push(toLatLon(v));
-  }
-
-  return points;
-}
-
 var gfx = {
 
     canvas : null,
@@ -406,7 +359,11 @@ var gfx = {
                 const c = [data.vertices[i2],     data.vertices[i2+1]];
 
                 // SUBDIVIDE IT HERE (depth 1 or 2)
-                const subdivided = subdivideTriangle(a, b, c, 2);
+                let subdivisions = 1;
+                if (name == "Russia") {
+                    subdivisions = 2;
+                }
+                const subdivided = subdivideTriangle(a, b, c, subdivisions);
 
                 // Flatten into the final vertex list
                 for (let v = 0; v < subdivided.length; v++) {
