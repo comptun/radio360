@@ -11,7 +11,7 @@ export async function createSession(env, userId) {
 
 export async function getSession(env, sessionId) {
   const row = await env.radio360db.prepare(
-    "SELECT user_id, expires_at FROM sessions WHERE user_id = ?"
+    "SELECT user_id, expires_at FROM sessions WHERE session_id = ?"
   ).bind(sessionId).first();
 
   if (!row) return null;

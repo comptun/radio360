@@ -1,6 +1,6 @@
 import { getSession } from "../shared/session";
 
-export async function onRequest(context, next) {
+export async function onRequest(context) {
   const cookie = context.request.headers.get("Cookie") || "";
   const match = cookie.match(/session=([^;]+)/);
   const sessionId = match?.[1];
