@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import Canvas from './Canvas';
 import Register from './Register'
+import Login from './Login'
 import Player from './Player'
+import Topbar from './Topbar'
 import gfx from './gfx';
 import station from './data/stations.json'
 
@@ -104,27 +106,27 @@ function App() {
 
     gfx.clear([0.0,0.0,0.0,1.0], gfx.canvas.width,gfx.canvas.height);
 
-    // gfx.resetMatrix();
-    // gfx.scale(gfx.canvas.height * 1.0 / zoom, gfx.canvas.height * 1.0 / zoom);
-    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
+    gfx.resetMatrix();
+    gfx.scale(gfx.canvas.height * 1.0 / zoom, gfx.canvas.height * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
     
-    // gfx.drawPlanet();
+    gfx.drawPlanet();
     
-    // gfx.resetMatrix();
-    // gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
-    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
-    // gfx.rotate(mouse.y, [1,0,0]);
-    // gfx.rotate(mouse.x, [0,1,0]);
+    gfx.resetMatrix();
+    gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
+    gfx.rotate(mouse.y, [1,0,0]);
+    gfx.rotate(mouse.x, [0,1,0]);
     
-    // gfx.drawIslands();
+    gfx.drawIslands();
 
-    // gfx.resetMatrix();
-    // gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
-    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5.1);
-    // gfx.rotate(mouse.y, [1,0,0]);
-    // gfx.rotate(mouse.x, [0,1,0]);
+    gfx.resetMatrix();
+    gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
+    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5.1);
+    gfx.rotate(mouse.y, [1,0,0]);
+    gfx.rotate(mouse.x, [0,1,0]);
     
-    // gfx.drawIslandsOutline();
+    gfx.drawIslandsOutline();
 
     gfx.resetMatrix();
     gfx.scale(-gfx.canvas.height * 0.48 * 1.0 / zoom, gfx.canvas.height * 0.48 * 1.0 / zoom);
@@ -140,6 +142,8 @@ function App() {
     <div style={{ width: "100%", height: "100%" }}>
       <Player></Player>
       <Register></Register>
+      <Login></Login>
+      <Topbar></Topbar>
       <Canvas id="game" draw={draw} />
     </div>
   );

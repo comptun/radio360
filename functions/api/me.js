@@ -2,7 +2,12 @@ export async function onRequestGet(context) {
   const userId = context.data.userId;
 
   if (!userId) {
-    return new Response("Not logged in", { status: 401 });
+    return new Response(JSON.stringify({
+        success: false,
+        message: "Not logged in"
+    }), {
+    headers: { "Content-Type": "application/json" }
+  });
   }
 
   const user = await context.env.radio360db.prepare(

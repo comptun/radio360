@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import User from './User'
 
-function Register() {
+function Login() {
     const [inputs, setInputs] = useState({
         username: "",
         password: ""
@@ -14,11 +14,11 @@ function Register() {
     }
 
     async function handleSubmit() {
-        await User.Register(inputs.username, inputs.password);
+        await User.Login(inputs.username, inputs.password);
     }
 
-    return <div id="Register" className="register-container">
-        <div className="form-item">Register</div>
+    return <div id="Login" className="register-container">
+        <div className="form-item">Login</div>
         <div className="form-item">
             <input name="username" placeholder="username" type="text" value={inputs.username} onChange={handleChange}/>
         </div>
@@ -27,9 +27,9 @@ function Register() {
         </div>
 
         <div className="form-item">
-            <button type="button" onClick={handleSubmit}>Register</button>
+            <button type="button" onClick={handleSubmit}>Login</button>
         </div>
     </div>;
 }
 
-export default Register;
+export default Login;

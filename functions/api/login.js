@@ -20,7 +20,7 @@ export async function onRequestPost({ request, env }) {
 
     const session = await createSession(env, userData.user_id);
 
-    return new Response("Logged in", {
+    return new Response(JSON.stringify(userData), {
         headers: {
         "Set-Cookie": `session=${session.id}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=604800`
         }
