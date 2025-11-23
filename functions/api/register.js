@@ -6,7 +6,7 @@ export async function onRequestPost(context) {
     const { username, password } = data;
 
     // Insert into D1
-    await env.DB.prepare(
+    await env.radio360db.prepare(
         "INSERT INTO users (username, password) VALUES (?, ?)"
     ).bind(username, password).run();
 
