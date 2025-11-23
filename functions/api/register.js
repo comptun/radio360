@@ -21,6 +21,8 @@ export async function onRequestPost({ request, env }) {
         "INSERT INTO users (user_id, username, password) VALUES (?, ?, ?)"
     ).bind(crypto.randomUUID(), username, password).run();
 
+    const session = await createSession(env, result.lastRowId);
+
     return new Response(
         JSON.stringify({ 
             success: true,
