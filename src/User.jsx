@@ -1,4 +1,11 @@
+async function loadUsers() {
+  const res = await fetch("/api/me");
+  const data = await res.json();
+  console.log(data);
+}
+
 const User = {
+    Data: null,
     Register:
         async function (username, password) {
             const res = await fetch("/api/register", {
@@ -11,7 +18,9 @@ const User = {
             });
 
             const data = await res.json();
-            console.log("Response:", data);
+            if (data.success) {
+                User.Data = data.data;
+            }
         },
     Login:
         async function (username, password) {
@@ -25,7 +34,17 @@ const User = {
             });
 
             const data = await res.json();
-            console.log("Response:", data);
+            if (data.success) {
+                User.Data = data.data;
+            }
+        },
+    GetUser:
+        async function () {
+            const res = await fetch("/api/me");
+            const data = await res.json();
+            if (data.success) {
+                User.Data = data.data;
+            }
         }
 };
 

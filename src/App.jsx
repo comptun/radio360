@@ -4,6 +4,7 @@ import Register from './Register'
 import Login from './Login'
 import Player from './Player'
 import Topbar from './Topbar'
+import User from './User'
 import gfx from './gfx';
 import station from './data/stations.json'
 
@@ -54,13 +55,9 @@ function InitCanvasEvents(canvas) {
   });
 }
 
-async function loadUsers() {
-  const res = await fetch("/api/me");
-  const data = await res.json();
-  console.log(data);
-}
-
-loadUsers();
+window.addEventListener("resize", function(event) {
+  gfx.recalculateCanvasSize();
+})
 
 function InitStations() {
   let index = 0;
@@ -79,13 +76,11 @@ function App() {
   const [message, setMessage] = useState("Loading...");
 
   useEffect(() => {
-    fetch("/api/message")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => {
-        console.error("Fetch error:", err);
-        setMessage("Failed to load message 😢");
-      });
+    User.GetUser();
+    InitCanvasEvents(gfx.canvas);
+    InitStations();
+    gfx.createStations();
+    console.log("App initialised")
   }, []);
 
   const draw = (frameCount) => {
@@ -93,14 +88,6 @@ function App() {
     gfx.setMouseDelta(mouse);
     gfx.setMousePos(mousePos);
     gfx.setZoom(zoom);
-
-    if (!init) {
-      init = true;
-      InitCanvasEvents(gfx.canvas);
-      InitStations();
-      gfx.createStations();
-
-    }
 
     gfx.bindFramebuffer(null);
 

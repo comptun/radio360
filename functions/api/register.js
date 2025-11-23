@@ -9,7 +9,8 @@ export async function onRequestPost({ request, env }) {
         return new Response(
             JSON.stringify({
                 success: false,
-                message: "Username already exists"
+                message: "Username already exists",
+                data: null
             }),
             { headers: { "Content-Type": "application/json" }}
         )
@@ -26,7 +27,8 @@ export async function onRequestPost({ request, env }) {
     return new Response(
         JSON.stringify({ 
             success: true,
-            message: "Account created"
+            message: "Account created",
+            data: result
         }), 
         { 
             headers: { 

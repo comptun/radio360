@@ -11,18 +11,28 @@ export async function onRequestPost({ request, env }) {
         return new Response(
             JSON.stringify({
                 success: false,
-                message: "User not found"
+                message: "User not found",
+                data: null
             }),
             { headers: { "Content-Type": "application/json" }}
-        )
+        );
     }
 
 
     const session = await createSession(env, userData.user_id);
 
-    return new Response(JSON.stringify(userData), {
-        headers: {
-        "Set-Cookie": `session=${session.id}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=604800`
+    return new Response(
+        
+        JSON.stringify({
+            success: true,
+            message: "Logged in",
+            data: userData
+        }), 
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "Set-Cookie": `session=${session.id}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=604800`
+            }
         }
-    });
+    );
 }

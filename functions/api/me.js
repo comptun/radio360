@@ -4,7 +4,8 @@ export async function onRequestGet(context) {
   if (!userId) {
     return new Response(JSON.stringify({
         success: false,
-        message: "Not logged in"
+        message: "Not logged in",
+        data: null
     }), {
     headers: { "Content-Type": "application/json" }
   });
@@ -14,7 +15,11 @@ export async function onRequestGet(context) {
     "SELECT user_id, username FROM users WHERE user_id = ?"
   ).bind(userId).first();
 
-  return new Response(JSON.stringify(user), {
+  return new Response(JSON.stringify({
+        success: true,
+        message: "Success",
+        data: user
+    }), {
     headers: { "Content-Type": "application/json" }
   });
 }

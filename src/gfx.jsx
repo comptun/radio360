@@ -117,6 +117,27 @@ var gfx = {
         this.stationVAO = null;
     },
 
+    recalculateCanvasSize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+
+        //this.gl.viewport(0, 0, width, height);
+
+        const fieldOfView = (45 * Math.PI) / 180; // in radians
+        const aspect = width/height;
+        const zNear = 0.01;
+        const zFar = 10000.0;
+        this.projPerspectiveMatrix = mat4.create();
+        this.projOrthoMatrix = mat4.create();
+
+        mat4.perspective(this.projPerspectiveMatrix, fieldOfView, aspect, zNear, zFar);
+        mat4.ortho(this.projOrthoMatrix, -width/2, width/2, height/2, -height/2, zNear, zFar);
+        this.projMatrix = this.projOrthoMatrix;
+    },
+
     projectToScreen(point, modelMatrix, projMatrix) {
         // 1. Convert point to vec4
         const p = vec4.fromValues(point[0], point[1], point[2], 1.0);
@@ -202,7 +223,6 @@ var gfx = {
     },
 
     createStations : function() {
-        console.log(this.stationPoints);
         this.stationVAO = this.gl.createVertexArray();
         this.gl.bindVertexArray(this.stationVAO);
 
@@ -245,8 +265,7 @@ var gfx = {
     createFramebuffer : function() {
         let width = this.mapScale.x*2000;//this.canvas.width;
         let height = this.mapScale.y*2000;//this.canvas.height;
-        console.log(width);
-        console.log(height);
+
         const texture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
         this.gl.texImage2D(
