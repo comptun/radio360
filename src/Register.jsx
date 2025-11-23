@@ -13,7 +13,7 @@ function Register() {
     }
 
     async function handleSubmit() {
-        const res = await fetch("/api/users", {
+        const res = await fetch("/api/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(inputs)
@@ -33,7 +33,7 @@ function Register() {
         </div>
 
         <div className="form-item">
-            <input value="Register" type="button" onClick={handleSubmit}/>
+            <button type="button" onClick={handleSubmit}>Register</button>
         </div>
     </div>;
 }
