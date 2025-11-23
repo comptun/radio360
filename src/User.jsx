@@ -1,5 +1,5 @@
 const User = {
-    Register: {
+    Register:
         async function (username, password) {
             const res = await fetch("/api/register", {
                 method: "POST",
@@ -13,7 +13,6 @@ const User = {
             const data = await res.json();
             console.log("Response:", data);
         }
-    }
 };
 
 export default User;

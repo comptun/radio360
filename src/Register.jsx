@@ -14,7 +14,7 @@ function Register() {
     }
 
     async function handleSubmit() {
-        await User["Register"](inputs.username, inputs.password);
+        await User.Register(inputs.username, inputs.password);
     }
 
     return <div className="register-container">
