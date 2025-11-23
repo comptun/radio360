@@ -53,7 +53,6 @@ function InitCanvasEvents(canvas) {
 }
 
 async function loadUsers() {
-  console.log("test");
   const res = await fetch("/api/me");
   const data = await res.json();
   console.log(data);

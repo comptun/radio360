@@ -1,4 +1,4 @@
-export async function onRequestPost(context) {
+export async function onRequestGet(context) {
   const userId = context.data.userId;
 
   if (!userId) {
