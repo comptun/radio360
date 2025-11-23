@@ -18,7 +18,7 @@ export async function onRequestPost({ request, env }) {
     }
 
 
-    const session = await createSession(env, user.id);
+    const session = await createSession(env, userData.user_id);
 
     return new Response("Logged in", {
         headers: {

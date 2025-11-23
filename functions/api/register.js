@@ -15,13 +15,13 @@ export async function onRequestPost({ request, env }) {
         )
     }
 
-
+    let uid = crypto.randomUUID();
     // Insert into D1
     const result = await env.radio360db.prepare(
         "INSERT INTO users (user_id, username, password) VALUES (?, ?, ?)"
-    ).bind(crypto.randomUUID(), username, password).run();
+    ).bind(uid, username, password).run();
 
-    const session = await createSession(env, result.lastRowId);
+    const session = await createSession(env, uid);
 
     return new Response(
         JSON.stringify({ 
