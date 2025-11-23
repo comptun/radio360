@@ -1,4 +1,5 @@
 import { userExists } from "../../shared/users";
+import { createSession } from "../../shared/session";
 
 export async function onRequestPost({ request, env }) {
 
@@ -16,7 +17,7 @@ export async function onRequestPost({ request, env }) {
 
 
     // Insert into D1
-    await env.radio360db.prepare(
+    const result = await env.radio360db.prepare(
         "INSERT INTO users (user_id, username, password) VALUES (?, ?, ?)"
     ).bind(crypto.randomUUID(), username, password).run();
 
@@ -25,6 +26,11 @@ export async function onRequestPost({ request, env }) {
             success: true,
             message: "Account created"
         }), 
-        { headers: { "Content-Type": "application/json" }}
+        { 
+            headers: { 
+                "Content-Type": "application/json",
+                "Set-Cookie": `session=${session.id}; HttpOnly; Secure; Path=/; SameSite=Strict; Max-Age=604800`
+            }
+        }
     );
 }
