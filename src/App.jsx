@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import Canvas from './Canvas';
+import Register from './Register'
+import Player from './Player'
 import gfx from './gfx';
 import station from './data/stations.json'
 
 let mouse = { "x": 0, "y": 0 };
-let mousePos = vec2;
+let mousePos = { "x": 0, "y": 0 };
 let zoom = 1;
 let zoomExp = 0;
 let playingSound = new Audio();
@@ -12,43 +14,46 @@ let playingSound = new Audio();
 let dragging = false;
 let init = false;
 
-window.addEventListener("wheel", (event) => { 
-  let delta = event.deltaY * 0.01;
-  zoomExp += delta; // scrolling up increases zoom
-  zoom = Math.pow(2, zoomExp);
-})
+function InitCanvasEvents(canvas) {
+  canvas.addEventListener("wheel", (event) => { 
+    let delta = event.deltaY * 0.01;
+    zoomExp += delta; // scrolling up increases zoom
+    zoom = Math.pow(2, zoomExp);
+  })
 
-window.addEventListener("mousedown", () => dragging = true);
-window.addEventListener("mouseup", () => dragging = false);
+  canvas.addEventListener("mousedown", () => dragging = true);
+  canvas.addEventListener("mouseup", () => dragging = false);
 
-window.addEventListener("click", (event) => {
-  let data = gfx.clickScreen(mousePos);
+  canvas.addEventListener("click", (event) => {
+    let data = gfx.clickScreen(mousePos);
 
-  if (data != null) {
-    playingSound.src = data["stream"];
-    playingSound.load();
-    playingSound.play();
-    console.log("playing");
+    if (data != null) {
+      playingSound.src = data["stream"];
+      playingSound.load();
+      playingSound.play();
+      console.log("playing");
 
-    document.getElementById("station-name").innerHTML = data["name"];
-    document.getElementById("station-location").innerHTML = data["location"];
-    document.getElementById("station-stream").innerHTML = data["stream"];
-  }
-});
-
-window.addEventListener("mousemove", (e) => {
-    mousePos = {"x":e.clientX, "y":e.clientY};
-    if (dragging) {
-        mouse.x   += e.movementX * 0.005 * zoom;
-        mouse.y -= e.movementY * 0.005 * zoom;
-
-
-        // clamp pitch so it never flips
-        mouse.y = Math.max(-Math.PI/2, Math.min(Math.PI/2, mouse.y));
+      document.getElementById("station-name").innerHTML = data["name"];
+      document.getElementById("station-location").innerHTML = data["location"];
+      document.getElementById("station-stream").innerHTML = data["stream"];
     }
-});
+  });
+
+  canvas.addEventListener("mousemove", (e) => {
+      mousePos = {"x":e.clientX, "y":e.clientY};
+      if (dragging) {
+          mouse.x   += e.movementX * 0.005 * zoom;
+          mouse.y -= e.movementY * 0.005 * zoom;
+
+
+          // clamp pitch so it never flips
+          mouse.y = Math.max(-Math.PI/2, Math.min(Math.PI/2, mouse.y));
+      }
+  });
+}
 
 async function loadUsers() {
+  console.log("test");
   const res = await fetch("/api/users");
   const data = await res.json();
   console.log(data);
@@ -90,7 +95,7 @@ function App() {
 
     if (!init) {
       init = true;
-
+      InitCanvasEvents(gfx.canvas);
       InitStations();
       gfx.createStations();
 
@@ -100,27 +105,27 @@ function App() {
 
     gfx.clear([0.0,0.0,0.0,1.0], gfx.canvas.width,gfx.canvas.height);
 
-    gfx.resetMatrix();
-    gfx.scale(gfx.canvas.height * 1.0 / zoom, gfx.canvas.height * 1.0 / zoom);
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
+    // gfx.resetMatrix();
+    // gfx.scale(gfx.canvas.height * 1.0 / zoom, gfx.canvas.height * 1.0 / zoom);
+    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
     
-    gfx.drawPlanet();
+    // gfx.drawPlanet();
     
-    gfx.resetMatrix();
-    gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
-    gfx.rotate(mouse.y, [1,0,0]);
-    gfx.rotate(mouse.x, [0,1,0]);
+    // gfx.resetMatrix();
+    // gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
+    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5);
+    // gfx.rotate(mouse.y, [1,0,0]);
+    // gfx.rotate(mouse.x, [0,1,0]);
     
-    gfx.drawIslands();
+    // gfx.drawIslands();
 
-    gfx.resetMatrix();
-    gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
-    gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5.1);
-    gfx.rotate(mouse.y, [1,0,0]);
-    gfx.rotate(mouse.x, [0,1,0]);
+    // gfx.resetMatrix();
+    // gfx.scale(-gfx.canvas.height * 0.478 * 1.0 / zoom, gfx.canvas.height * 0.478 * 1.0 / zoom);
+    // gfx.translate(gfx.canvas.width / 2, gfx.canvas.height / 2, 5.1);
+    // gfx.rotate(mouse.y, [1,0,0]);
+    // gfx.rotate(mouse.x, [0,1,0]);
     
-    gfx.drawIslandsOutline();
+    // gfx.drawIslandsOutline();
 
     gfx.resetMatrix();
     gfx.scale(-gfx.canvas.height * 0.48 * 1.0 / zoom, gfx.canvas.height * 0.48 * 1.0 / zoom);
@@ -134,6 +139,8 @@ function App() {
 
   return (
     <div style={{ width: "100%", height: "100%" }}>
+      <Player></Player>
+      <Register></Register>
       <Canvas id="game" draw={draw} />
     </div>
   );

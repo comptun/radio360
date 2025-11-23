@@ -359,7 +359,7 @@ var gfx = {
                 const c = [data.vertices[i2],     data.vertices[i2+1]];
 
                 // SUBDIVIDE IT HERE (depth 1 or 2)
-                let subdivisions = 1;
+                let subdivisions = 0;
                 if (name == "Russia") {
                     subdivisions = 2;
                 }
