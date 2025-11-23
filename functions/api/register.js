@@ -7,8 +7,8 @@ export async function onRequestPost(context) {
 
     // Insert into D1
     await env.radio360db.prepare(
-        "INSERT INTO users (username, password) VALUES (?, ?)"
-    ).bind(username, password).run();
+        "INSERT INTO users (user_id, username, password) VALUES (?, ?, ?)"
+    ).bind(crypto.randomUUID(), username, password).run();
 
     return new Response(
         JSON.stringify({ success: true }), 
