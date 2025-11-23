@@ -17,17 +17,24 @@ function Login() {
         await User.Login(inputs.username, inputs.password);
     }
 
+    function handleExit() {
+        document.getElementById("Login").style.display = "none";
+    }
+
     return <div id="Login" className="register-container">
-        <div className="form-item">Login</div>
         <div className="form-item">
-            <input name="username" placeholder="username" type="text" value={inputs.username} onChange={handleChange}/>
+            Login
+            <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
         </div>
         <div className="form-item">
-            <input name="password" placeholder="password" type="text" value={inputs.password} onChange={handleChange}/>
+            <input type="password" className="text-field" name="username" placeholder="username" value={inputs.username} onChange={handleChange}/>
+        </div>
+        <div className="form-item">
+            <input type="password" className="text-field" name="password" placeholder="password" value={inputs.password} onChange={handleChange}/>
         </div>
 
         <div className="form-item">
-            <button type="button" onClick={handleSubmit}>Login</button>
+            <button className="topbar-button" type="button" onClick={handleSubmit}>Login</button>
         </div>
     </div>;
 }

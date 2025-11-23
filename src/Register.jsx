@@ -4,7 +4,8 @@ import User from './User'
 function Register() {
     const [inputs, setInputs] = useState({
         username: "",
-        password: ""
+        password: "",
+        passwordConfirm: ""
     });
 
     function handleChange(e) {
@@ -17,17 +18,27 @@ function Register() {
         await User.Register(inputs.username, inputs.password);
     }
 
+    function handleExit() {
+        document.getElementById("Register").style.display = "none";
+    }
+
     return <div id="Register" className="register-container">
-        <div className="form-item">Register</div>
         <div className="form-item">
-            <input name="username" placeholder="username" type="text" value={inputs.username} onChange={handleChange}/>
+            Register
+            <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
         </div>
         <div className="form-item">
-            <input name="password" placeholder="password" type="text" value={inputs.password} onChange={handleChange}/>
+            <input className="text-field" name="username" placeholder="username" type="text" value={inputs.username} onChange={handleChange}/>
+        </div>
+        <div className="form-item">
+            <input type="password" className="text-field" name="password" placeholder="password" value={inputs.password} onChange={handleChange}/>
+        </div>
+        <div className="form-item">
+            <input type="password" className="text-field" name="passwordConfirm" placeholder="repeat password" value={inputs.passwordConfirm} onChange={handleChange}/>
         </div>
 
         <div className="form-item">
-            <button type="button" onClick={handleSubmit}>Register</button>
+            <button className="topbar-button" type="button" onClick={handleSubmit}>Register</button>
         </div>
     </div>;
 }

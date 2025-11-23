@@ -14,11 +14,12 @@ function Topbar() {
 
     function handleClick(e) {
 
+        let displayVal = document.getElementById(e.target.name).style.display;
+
         for (let i = 0; i < menus.length; i++) {
             document.getElementById(menus[i]).style.display = "none";
         }
 
-        let displayVal = document.getElementById(e.target.name).style.display;
         if (displayVal == "none") {
             document.getElementById(e.target.name).style.display = "block";
         }
@@ -28,6 +29,9 @@ function Topbar() {
     }
 
     return <div className="topbar">
+        <div className="topbar-item">
+            <button className="topbar-button" name="Logo" type="button" onClick={(e) => handleClick(e)}>radio360</button>
+        </div>
         <div className="topbar-item">
             <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
         </div>

@@ -4,14 +4,17 @@ body {
 
 #player {
     position: absolute;
-    height: 30%;
+    height: auto;
     width: 300px;
-    background-color: white;
+    background-color: rgb(49 49 49);
     z-index: 1000;
     margin-left: 20px;
-    opacity: 0.5;
     bottom: 25px;
-    border-radius: 8px;
+    color: white;
+    white-space: nowrap;
+    overflow:hidden;
+    border-style: outset;
+    border-color: black;
 }
 
 #station-name {
@@ -31,16 +34,16 @@ body {
 
 .register-container {
     position: absolute;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    margin-top: 50px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     height: auto;
     width: 300px;
-    background-color: rgb(0, 0, 0);
+    background-color: rgb(49 49 49);
     z-index: 1000;
-    opacity: 0.9;
     color: white;
+    border-style: outset;
+    border-color: black;
 }
 
 .form-item {
@@ -61,6 +64,17 @@ body {
 }
 
 .topbar-button {
-    background-color: transparent;
+    background-color: rgb(49 49 49);
     color: white;
+}
+
+.text-field {
+    width: 75%;
+    border-style: inset;
+    border-color: white;
+}
+
+.exit-button {
+    position: absolute;
+    right: 10px;
 }
