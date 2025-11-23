@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import User from './User'
 
 function Register() {
     const [inputs, setInputs] = useState({
@@ -13,14 +14,7 @@ function Register() {
     }
 
     async function handleSubmit() {
-        const res = await fetch("/api/register", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(inputs)
-        });
-
-        const data = await res.json();
-        console.log("Response:", data);
+        User.Register(inputs.username, inputs.password);
     }
 
     return <div className="register-container">

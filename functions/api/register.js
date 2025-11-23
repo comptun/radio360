@@ -1,9 +1,19 @@
-export async function onRequestPost(context) {
-    const { request, env } = context;
+import { userExists } from "../../shared/users";
 
-    // Get JSON from body
-    const data = await request.json();
-    const { username, password } = data;
+export async function onRequestPost({ request, env }) {
+
+    const { username, password } = await request.json();
+
+    if (await userExists(env, username)) {
+        return new Response(
+            JSON.stringify({
+                success: false,
+                message: "Username already exists"
+            }),
+            { headers: { "Content-Type": "application/json" }}
+        )
+    }
+
 
     // Insert into D1
     await env.radio360db.prepare(
@@ -11,7 +21,10 @@ export async function onRequestPost(context) {
     ).bind(crypto.randomUUID(), username, password).run();
 
     return new Response(
-        JSON.stringify({ success: true }), 
+        JSON.stringify({ 
+            success: true,
+            message: "Account created"
+        }), 
         { headers: { "Content-Type": "application/json" }}
     );
 }
