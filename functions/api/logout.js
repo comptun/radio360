@@ -17,7 +17,8 @@ export async function onRequestPost(context) {
             data: null
         }), {
     headers: {
-      "Set-Cookie": "session=; Path=/; HttpOnly; Max-Age=0"
+        "Content-Type": "application/json",
+        "Set-Cookie": "session=; Path=/; HttpOnly; Max-Age=0"
     }
   });
 }
