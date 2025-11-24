@@ -4,7 +4,7 @@ export async function onRequestPost(context) {
   const id = match?.[1];
 
   if (id) {
-    await context.env.DB
+    await context.env.radio360db
       .prepare("DELETE FROM sessions WHERE session_id = ?")
       .bind(id)
       .run();
