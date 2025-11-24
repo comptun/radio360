@@ -3,10 +3,10 @@ import React, { useEffect, useState } from "react";
 function Player() {
 
   function handleClick(e) {
-    
+
   }
 
-  return (<>
+  return (<div class="sidebar">
   <div class="sidebar-container">
     <div id="station-name" className="station-info">Example station</div>
     <div id="station-location" className="station-info">London, United Kingdom</div>
@@ -18,7 +18,7 @@ function Player() {
     <button name="Stop" className="player-button std-button" type="button" onClick={handleClick}>Stop</button>
     <button name="Random" className="player-button std-button" type="button" onClick={handleClick}>Random</button>
   </div>
-  </>
+  </div>
   );
 }
 
