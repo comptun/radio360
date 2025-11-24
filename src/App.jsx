@@ -128,8 +128,6 @@ function App() {
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <Player></Player>
-      <Register></Register>
-      <Login></Login>
       <Topbar></Topbar>
       <Canvas id="game" draw={draw} />
     </div>

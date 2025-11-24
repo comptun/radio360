@@ -7,14 +7,35 @@ let menus = [
 
 function Topbar() {
 
-    let buttons;
+    const [userData, setUserData] = useState(null);
+
+    const [inputsRegister, setInputsRegister] = useState({
+        username: "",
+        password: "",
+        passwordConfirm: ""
+    });
+
+    const [inputsLogin, setInputsLogin] = useState({
+        username: "",
+        password: ""
+    });
 
     useEffect(() => {
         for (let i = 0; i < menus.length; i++) {
             document.getElementById(menus[i]).style.display = "none";
         }
-
     });
+
+    function handleChangeRegister(e) {
+        const name = e.target.name;
+        const value = e.target.value;
+        setInputsRegister(values => ({...values, [name]: value}))
+    }
+    function handleChangeLogin(e) {
+        const name = e.target.name;
+        const value = e.target.value;
+        setInputsLogin(values => ({...values, [name]: value}))
+    }
 
     function handleClick(e) {
 
@@ -32,34 +53,74 @@ function Topbar() {
         }
     }
 
-    console.log(User.Data);
-    if (User.Data == null) {
-        buttons = <>
-            <div className="topbar-item">
-                <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
-            </div>
-            <div className="topbar-item">
-                <button className="topbar-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Login</button>
-            </div>
-        </>;
-    }
-    else {
-        buttons = <>
-            <div className="topbar-item">
-                <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>{User.Data.username}</button>
-            </div>
-            <div className="topbar-item">
-                <button className="topbar-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Logout</button>
-            </div>
-        </>;
+    function handleRegister() {
+        User.Register(inputsRegister.username, inputsRegister.password);
+        setUserData(User.Data);
     }
 
-    return <div className="topbar">
+    function handleLogin() {
+        User.Login(inputsLogin.username, inputsLogin.password);
+        setUserData(User.Data);
+    }
+
+    function handleExit() {
+        document.getElementById("Register").style.display = "none";
+        document.getElementById("Login").style.display = "none";
+    }
+
+    return (<>
+
+    <div id="Login" className="register-container">
+        <div className="form-item">
+            Login
+            <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
+        </div>
+        <div className="form-item">
+            <input className="text-field" name="username" placeholder="username" value={inputsLogin.username} onChange={handleChangeLogin}/>
+        </div>
+        <div className="form-item">
+            <input type="password" className="text-field" name="password" placeholder="password" value={inputsLogin.password} onChange={handleChangeLogin}/>
+        </div>
+
+        <div className="form-item">
+            <button className="topbar-button" type="button" onClick={handleLogin}>Login</button>
+        </div>
+    </div>
+
+    <div id="Register" className="register-container">
+        <div className="form-item">
+            Register
+            <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
+        </div>
+        <div className="form-item">
+            <input className="text-field" name="username" placeholder="username" type="text" value={inputsRegister.username} onChange={handleChangeRegister}/>
+        </div>
+        <div className="form-item">
+            <input type="password" className="text-field" name="password" placeholder="password" value={inputsRegister.password} onChange={handleChangeRegister}/>
+        </div>
+        <div className="form-item">
+            <input type="password" className="text-field" name="passwordConfirm" placeholder="repeat password" value={inputsRegister.passwordConfirm} onChange={handleChangeRegister}/>
+        </div>
+
+        <div className="form-item">
+            <button className="topbar-button" type="button" onClick={handleRegister}>Register</button>
+        </div>
+    </div>
+    
+    <div className="topbar">
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
-        {buttons}
-    </div>;
+        <div className="topbar-item">
+            <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
+        </div>
+        <div className="topbar-item">
+            <button className="topbar-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Login</button>
+        </div>
+    </div>
+    
+    </>
+    );
 }
 
 export default Topbar;

@@ -27,7 +27,7 @@ function Login() {
             <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
         </div>
         <div className="form-item">
-            <input type="password" className="text-field" name="username" placeholder="username" value={inputs.username} onChange={handleChange}/>
+            <input className="text-field" name="username" placeholder="username" value={inputs.username} onChange={handleChange}/>
         </div>
         <div className="form-item">
             <input type="password" className="text-field" name="password" placeholder="password" value={inputs.password} onChange={handleChange}/>
