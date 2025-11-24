@@ -5,7 +5,7 @@ let menus = [
     "Login", "Register"
 ]
 
-await User.GetUser();
+User.GetUser();
 
 function Topbar() {
 
