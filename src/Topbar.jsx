@@ -110,7 +110,7 @@ function Topbar() {
         </div>
     </div>
     
-    <div className="topbar">
+    <div className="topbar" key={User.Data}>
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
