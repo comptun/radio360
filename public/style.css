@@ -2,7 +2,7 @@ body {
     font-family: sans-serif;
 }
 
-sidebar-container {
+.sidebar-container {
     position: absolute;
     height: auto;
     width: 300px;
