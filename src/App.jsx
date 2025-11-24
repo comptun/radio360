@@ -73,9 +73,17 @@ function InitStations() {
 }
 
 function App() {
-  const [user, setUser] = useState(User.GetUser());
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+
+    async function loadUser() {
+      const u = await User.GetUser();   // if it returns a Promise
+      setUser(u);
+      console.log(u);
+    }
+    loadUser();
+
     InitCanvasEvents(gfx.canvas);
     InitStations();
     gfx.createStations();

@@ -112,7 +112,7 @@ function Topbar({user, onLogin, onLogout}) {
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
-        {user && (<>
+        {!user && (<>
         <div className="topbar-item">
             <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
         </div>
