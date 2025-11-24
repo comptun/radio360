@@ -28,7 +28,6 @@ function Topbar() {
         setUserData(User.Data);
         console.log(User.Data);
     }, []);
-    setUserData(User.Data);
 
     function handleChangeRegister(e) {
         const name = e.target.name;
