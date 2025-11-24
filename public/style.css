@@ -2,7 +2,7 @@ body {
     font-family: sans-serif;
 }
 
-#player {
+sidebar-container {
     position: absolute;
     height: auto;
     width: 300px;
@@ -63,7 +63,7 @@ body {
     padding: 10px;
 }
 
-.topbar-button {
+.std-button {
     background-color: rgb(49 49 49);
     color: white;
 }
@@ -77,4 +77,10 @@ body {
 .exit-button {
     position: absolute;
     right: 10px;
+}
+
+.player-button {
+    width: 33%;
+    height: 100%;
+    padding: 10px;
 }

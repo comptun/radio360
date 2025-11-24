@@ -84,7 +84,7 @@ function Topbar({user, onLogin, onLogout}) {
     <div id="Login" className="register-container">
         <div className="form-item">
             Login
-            <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
+            <button className="exit-button std-button" type="button" onClick={handleExit}>x</button>
         </div>
         <div className="form-item">
             <input className="text-field" name="username" placeholder="username" value={inputsLogin.username} onChange={handleChangeLogin}/>
@@ -94,14 +94,14 @@ function Topbar({user, onLogin, onLogout}) {
         </div>
 
         <div className="form-item">
-            <button className="topbar-button" type="button" onClick={handleLogin}>Login</button>
+            <button className="std-button" type="button" onClick={handleLogin}>Login</button>
         </div>
     </div>
 
     <div id="Register" className="register-container">
         <div className="form-item">
             Register
-            <button className="exit-button topbar-button" type="button" onClick={handleExit}>x</button>
+            <button className="exit-button std-button" type="button" onClick={handleExit}>x</button>
         </div>
         <div className="form-item">
             <input className="text-field" name="username" placeholder="username" type="text" value={inputsRegister.username} onChange={handleChangeRegister}/>
@@ -114,27 +114,27 @@ function Topbar({user, onLogin, onLogout}) {
         </div>
 
         <div className="form-item">
-            <button className="topbar-button" type="button" onClick={handleRegister}>Register</button>
+            <button className="std-button" type="button" onClick={handleRegister}>Register</button>
         </div>
     </div>
     
     <div className="topbar" key={user}>
         <div className="topbar-item">
-            <button className="topbar-button" name="Logo" type="button">radio360</button>
+            <button className="std-button" name="Logo" type="button">radio360</button>
         </div>
         {!user ? (<>
         <div className="topbar-item">
-            <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
+            <button className="std-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
         </div>
         <div className="topbar-item">
-            <button className="topbar-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Login</button>
+            <button className="std-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Login</button>
         </div>
         </>) : (<>
             <div className="topbar-item">
-                <button className="topbar-button" name="User" type="button">Logged in as {user.username}</button>
+                <button className="std-button" name="User" type="button">Logged in as {user.username}</button>
             </div>
             <div className="topbar-item">
-                <button className="topbar-button" name="Logout" type="button" onClick={onLogout}>Logout</button>
+                <button className="std-button" name="Logout" type="button" onClick={onLogout}>Logout</button>
             </div>
         </>)}
     </div>
