@@ -54,14 +54,19 @@ function Topbar({user, onLogin, onLogout}) {
     }
 
     function handleRegister() {
-        User.Register(inputsRegister.username, inputsRegister.password);
-        onLogin(User.Data);
+        async function Register() {
+            const u = await User.Register(inputsRegister.username, inputsRegister.password);
+            onLogin(u.data);
+        }
+        Register();
     }
 
     function handleLogin() {
-        User.Login(inputsLogin.username, inputsLogin.password);
-        console.log(User.Data);
-        onLogin(User.Data);
+        async function Login() {
+            const u = await User.Login(inputsRegister.username, inputsRegister.password);
+            onLogin(u.data);
+        }
+        Login();
     }
 
     function handleExit() {
