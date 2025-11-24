@@ -10,7 +10,12 @@ export async function onRequestPost(context) {
       .run();
   }
 
-  return new Response("Logged out", {
+  return new Response(
+    JSON.stringify({ 
+            success: true,
+            message: "Logged out",
+            data: null
+        }), {
     headers: {
       "Set-Cookie": "session=; Path=/; HttpOnly; Max-Age=0"
     }
