@@ -51,7 +51,10 @@ const User = {
         },
     Logout:
         async function () {
-            const res = await fetch("/api/logout");
+            const res = await fetch("/api/logout", {
+                method: "POST",
+                credentials: "include"
+            });
             const data = await res.json();
             if (data.success) {
                 User.Data = null;
