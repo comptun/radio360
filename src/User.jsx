@@ -48,6 +48,16 @@ const User = {
                 return data;
             }
             return null;
+        },
+    Logout:
+        async function () {
+            const res = await fetch("/api/logout");
+            const data = await res.json();
+            if (data.success) {
+                User.Data = null;
+                return data;
+            }
+            return null;
         }
 };
 

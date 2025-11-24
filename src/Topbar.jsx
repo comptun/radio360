@@ -129,11 +129,14 @@ function Topbar({user, onLogin, onLogout}) {
         <div className="topbar-item">
             <button className="topbar-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Login</button>
         </div>
-        </>) : (
+        </>) : (<>
+            <div className="topbar-item">
+                <button className="topbar-button" name="User" type="button">Logged in as {user.username}</button>
+            </div>
             <div className="topbar-item">
                 <button className="topbar-button" name="Logout" type="button" onClick={onLogout}>Logout</button>
             </div>
-        )}
+        </>)}
     </div>
     
     </>

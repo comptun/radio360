@@ -139,6 +139,7 @@ function App() {
 
   function handleLogout() {
     setUser(null);
+    User.Logout();
   }
 
   return (
