@@ -1,8 +1,4 @@
-async function loadUsers() {
-  const res = await fetch("/api/me");
-  const data = await res.json();
-  console.log(data);
-}
+
 
 const User = {
     Data: null,

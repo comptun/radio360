@@ -5,6 +5,8 @@ let menus = [
     "Login", "Register"
 ]
 
+await User.GetUser();
+
 function Topbar() {
 
     const [userData, setUserData] = useState(null);
@@ -24,7 +26,7 @@ function Topbar() {
         for (let i = 0; i < menus.length; i++) {
             document.getElementById(menus[i]).style.display = "none";
         }
-        User.GetUser();
+        
         setUserData(User.Data);
         console.log(User.Data);
     }, []);
