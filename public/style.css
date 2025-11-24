@@ -1,5 +1,5 @@
 body {
-    font-family: sans-serif;
+    font-family: "MS Sans Serif", Arial, sans-serif;
 }
 
 .sidebar-container {
@@ -11,6 +11,7 @@ body {
     overflow:hidden;
     border-style: outset;
     border-color: black;
+    margin-top: 10px;
 }
 
 .sidebar {
@@ -86,7 +87,7 @@ body {
 }
 
 .player-button {
-    width: 33%;
+    width: 33.33333333%;
     height: 100%;
     padding: 10px;
 }
