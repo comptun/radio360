@@ -23,7 +23,6 @@ function Topbar({user, onLogin, onLogout}) {
             document.getElementById(menus[i]).style.display = "none";
         }
         
-        setUserData(User.Data);
         console.log(User.Data);
     }, []);
 
@@ -56,13 +55,11 @@ function Topbar({user, onLogin, onLogout}) {
 
     function handleRegister() {
         User.Register(inputsRegister.username, inputsRegister.password);
-        setUserData(User.Data);
         onLogin(User.Data);
     }
 
     function handleLogin() {
         User.Login(inputsLogin.username, inputsLogin.password);
-        setUserData(User.Data);
         console.log(User.Data);
         onLogin(User.Data);
     }
@@ -111,7 +108,7 @@ function Topbar({user, onLogin, onLogout}) {
         </div>
     </div>
     
-    <div className="topbar" key={userData}>
+    <div className="topbar" key={user}>
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
