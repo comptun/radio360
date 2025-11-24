@@ -26,6 +26,7 @@ function Topbar() {
         }
         User.GetUser();
         setUserData(User.Data);
+        console.log(User.Data);
     }, []);
 
     function handleChangeRegister(e) {
