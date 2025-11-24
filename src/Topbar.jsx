@@ -110,11 +110,11 @@ function Topbar() {
         </div>
     </div>
     
-    <div className="topbar" key={User.Data}>
+    <div className="topbar" key={userData}>
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
-        {User.Data == null && (<>
+        {userData == null && (<>
         <div className="topbar-item">
             <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
         </div>
