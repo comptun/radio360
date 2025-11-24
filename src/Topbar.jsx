@@ -111,12 +111,14 @@ function Topbar() {
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
+        {userData != null && (<>
         <div className="topbar-item">
             <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
         </div>
         <div className="topbar-item">
             <button className="topbar-button" name="Login" type="button" onClick={(e) => handleClick(e)}>Login</button>
         </div>
+        </>)}
     </div>
     
     </>
