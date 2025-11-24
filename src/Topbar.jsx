@@ -65,7 +65,8 @@ function Topbar({user, onLogin, onLogout}) {
 
     function handleLogin() {
         async function Login() {
-            const u = await User.Login(inputsRegister.username, inputsRegister.password);
+            const u = await User.Login(inputsLogin.username, inputsLogin.password);
+            console.log(u);
             if (u != null) {
                 onLogin(u.data);
             }
