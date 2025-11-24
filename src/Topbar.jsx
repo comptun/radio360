@@ -64,6 +64,7 @@ function Topbar() {
     function handleLogin() {
         User.Login(inputsLogin.username, inputsLogin.password);
         setUserData(User.Data);
+        console.log(User.Data);
     }
 
     function handleExit() {
