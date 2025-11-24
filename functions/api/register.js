@@ -28,7 +28,10 @@ export async function onRequestPost({ request, env }) {
         JSON.stringify({ 
             success: true,
             message: "Account created",
-            data: result
+            data: {
+                userid: uid,
+                username: username
+            }
         }), 
         { 
             headers: { 
