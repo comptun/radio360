@@ -24,6 +24,7 @@ function Topbar() {
         for (let i = 0; i < menus.length; i++) {
             document.getElementById(menus[i]).style.display = "none";
         }
+        User.GetUser();
         setUserData(User.Data);
     }, []);
 

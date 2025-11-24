@@ -76,7 +76,6 @@ function App() {
   const [message, setMessage] = useState("Loading...");
 
   useEffect(() => {
-    User.GetUser();
     InitCanvasEvents(gfx.canvas);
     InitStations();
     gfx.createStations();
