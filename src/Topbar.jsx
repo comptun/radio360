@@ -5,11 +5,7 @@ let menus = [
     "Login", "Register"
 ]
 
-User.GetUser();
-
-function Topbar() {
-
-    const [userData, setUserData] = useState(null);
+function Topbar({user, onLogin, onLogout}) {
 
     const [inputsRegister, setInputsRegister] = useState({
         username: "",
@@ -61,12 +57,14 @@ function Topbar() {
     function handleRegister() {
         User.Register(inputsRegister.username, inputsRegister.password);
         setUserData(User.Data);
+        onLogin(User.Data);
     }
 
     function handleLogin() {
         User.Login(inputsLogin.username, inputsLogin.password);
         setUserData(User.Data);
         console.log(User.Data);
+        onLogin(User.Data);
     }
 
     function handleExit() {
@@ -117,7 +115,7 @@ function Topbar() {
         <div className="topbar-item">
             <button className="topbar-button" name="Logo" type="button">radio360</button>
         </div>
-        {userData == null && (<>
+        {!user && (<>
         <div className="topbar-item">
             <button className="topbar-button" name="Register" type="button" onClick={(e) => handleClick(e)}>Register</button>
         </div>

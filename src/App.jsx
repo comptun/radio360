@@ -73,7 +73,7 @@ function InitStations() {
 }
 
 function App() {
-  const [message, setMessage] = useState("Loading...");
+  const [user, setUser] = useState(User.GetUser());
 
   useEffect(() => {
     InitCanvasEvents(gfx.canvas);
@@ -124,10 +124,18 @@ function App() {
 
   }
 
+  function handleLogin(userObj) {
+    setUser(userObj);
+  }
+
+  function handleLogout() {
+    setUser(null);
+  }
+
   return (
     <div style={{ width: "100%", height: "100%" }}>
       <Player></Player>
-      <Topbar></Topbar>
+      <Topbar user={user} onLogin={handleLogin} onLogout={handleLogout}></Topbar>
       <Canvas id="game" draw={draw} />
     </div>
   );
