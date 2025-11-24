@@ -24,7 +24,7 @@ function Topbar() {
         for (let i = 0; i < menus.length; i++) {
             document.getElementById(menus[i]).style.display = "none";
         }
-    });
+    }, []);
 
     function handleChangeRegister(e) {
         const name = e.target.name;
