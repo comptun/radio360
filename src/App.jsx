@@ -79,7 +79,9 @@ function App() {
 
     async function loadUser() {
       const u = await User.GetUser();   // if it returns a Promise
-      setUser(u);
+      if (u != null) {
+        setUser(u.data);
+      }
     }
     loadUser();
 

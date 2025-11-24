@@ -16,7 +16,7 @@ const User = {
             const data = await res.json();
             if (data.success) {
                 User.Data = data.data;
-                return data.data;
+                return data;
             }
             return null;
         },
@@ -34,7 +34,7 @@ const User = {
             const data = await res.json();
             if (data.success) {
                 User.Data = data.data;
-                return data.data;
+                return data;
             }
             return null;
         },
@@ -45,7 +45,7 @@ const User = {
             if (data.success) {
                 User.Data = data.data;
                 console.log(User.Data);
-                return data.data;
+                return data;
             }
             return null;
         }

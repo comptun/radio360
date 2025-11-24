@@ -56,7 +56,9 @@ function Topbar({user, onLogin, onLogout}) {
     function handleRegister() {
         async function Register() {
             const u = await User.Register(inputsRegister.username, inputsRegister.password);
-            onLogin(u.data);
+            if (u != null) {
+                onLogin(u.data);
+            }
         }
         Register();
     }
@@ -64,7 +66,9 @@ function Topbar({user, onLogin, onLogout}) {
     function handleLogin() {
         async function Login() {
             const u = await User.Login(inputsRegister.username, inputsRegister.password);
-            onLogin(u.data);
+            if (u != null) {
+                onLogin(u.data);
+            }
         }
         Login();
     }
