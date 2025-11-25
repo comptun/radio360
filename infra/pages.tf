@@ -11,7 +11,7 @@ resource "cloudflare_pages_project" "radio360" {
   deployment_configs = {
     production = {
       d1_databases = {
-        D1_BINDING = {
+        radio360db = {
           id = cloudflare_d1_database.radio360db.id
         }
       }
