@@ -17,6 +17,14 @@ resource "cloudflare_pages_project" "radio360" {
       }
       fail_open = true
     }
+    preview = {
+      d1_databases = {
+        D1_BINDING = {
+          id = cloudflare_d1_database.radio360db.id
+        }
+      }
+      fail_open = true
+    }
   }
 
   source = {
