@@ -38,7 +38,6 @@ resource "cloudflare_pages_project" "radio360" {
       preview_branch_excludes = ["string"]
       preview_branch_includes = ["string"]
       preview_deployment_setting = "all"
-      production_branch = "main"
       production_deployments_enabled = true
       repo_name     = "radio360"
     }
