@@ -26,7 +26,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: infra
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="access-key=${secrets.R2_ACCESS_KEY_ID}" \
+            -backend-config="secret-key=${secrets.R2_SECRET_ACCESS_KEY}" \
+            -backend-config="endpoints.s3=https://${secrets.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com"
 
       - name: Terraform Plan
         working-directory: infra
