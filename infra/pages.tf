@@ -3,7 +3,7 @@ resource "cloudflare_pages_project" "radio360" {
   name              = "radio360"
   production_branch = "main"
 
-  build_config {
+  build_config = {
     build_command   = "npm ci && npm run build"
     destination_dir = "dist"
   }
@@ -18,9 +18,9 @@ resource "cloudflare_pages_project" "radio360" {
     }
   }
 
-  source {
+  source = {
     type = "github"
-    config {
+    config = {
       deployments_enabled = true
       owner    = "comptun"
       production_branch = "main"
