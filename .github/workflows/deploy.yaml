@@ -14,6 +14,8 @@ jobs:
     env:
       TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       TF_VAR_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      TF_VAR_r2_access_key_id: ${{ secrets.R2_ACCESS_KEY_ID }}
+      TF_VAR_r2_secret_access_key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
 
     steps:
       - name: Checkout
