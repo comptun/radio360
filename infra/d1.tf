@@ -3,7 +3,4 @@ resource "cloudflare_d1_database" "radio360db" {
   name = "radio360"
   jurisdiction = "eu"
   primary_location_hint = "wnam"
-  read_replication = {
-    mode = "disabled"
-  }
 }
