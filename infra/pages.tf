@@ -15,6 +15,7 @@ resource "cloudflare_pages_project" "radio360" {
           id = cloudflare_d1_database.radio360db.id
         }
       }
+      fail_open = true
     }
   }
 
