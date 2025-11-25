@@ -8,13 +8,24 @@ resource "cloudflare_pages_project" "radio360" {
     destination_dir = "dist"
   }
 
+  deployment_configs = {
+    production = {
+      d1_databases = {
+        D1_BINDING = {
+          id = cloudflare_d1_database.radio360db.id
+        }
+      }
+    }
+  }
+
   source {
     type = "github"
     config {
       deployments_enabled = true
       owner    = "comptun"
-      repo_name     = "radio360"
       production_branch = "main"
+      production_deployments_enabled = true
+      repo_name     = "radio360"
     }
   }
 }
