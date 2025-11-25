@@ -6,6 +6,7 @@ terraform {
   }
 }
 
+
 locals {
   project_name = "radio360"
 }
@@ -17,6 +18,3 @@ locals {
     managed_by = "terraform"
   }
 }
-
-# Nothing else is needed — resources live in
-# pages.tf, worker.tf, d1.tf, env.tf, etc.
