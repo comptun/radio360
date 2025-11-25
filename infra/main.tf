@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 1.5"
 
   backend "s3" {
-    bucket = "radio360_bucket"
+    bucket = "radio360-bucket"
     key    = "prod/terraform.tfstate"
     region                      = "auto"
     skip_credentials_validation = true
