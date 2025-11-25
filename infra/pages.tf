@@ -32,7 +32,13 @@ resource "cloudflare_pages_project" "radio360" {
     config = {
       deployments_enabled = true
       owner    = "comptun"
-      
+      path_excludes = ["string"]
+      path_includes = ["string"]
+      pr_comments_enabled = true
+      preview_branch_excludes = ["string"]
+      preview_branch_includes = ["string"]
+      preview_deployment_setting = "all"
+      production_branch = "main"
       production_deployments_enabled = true
       repo_name     = "radio360"
     }
