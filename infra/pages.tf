@@ -24,7 +24,7 @@ resource "cloudflare_pages_project" "radio360" {
       deployments_enabled = true
       owner    = "comptun"
       production_branch = "main"
-      production_deployments_enabled = true
+      production_deployment_enabled = true
       repo_name     = "radio360"
     }
   }
