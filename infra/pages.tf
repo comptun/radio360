@@ -32,7 +32,7 @@ resource "cloudflare_pages_project" "radio360" {
     config = {
       deployments_enabled = true
       owner    = "comptun"
-      production_branch = "main"
+      
       production_deployments_enabled = true
       repo_name     = "radio360"
     }
