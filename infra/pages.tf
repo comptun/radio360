@@ -15,12 +15,32 @@ resource "cloudflare_pages_project" "radio360" {
           id = cloudflare_d1_database.radio360db.id
         }
       }
+      env_vars = {
+        login_turnstile_secret = {
+          type = "secret_text"
+          value = cloudflare_turnstile_widget.login_radio360_turnstile_widget.secret
+        }
+        register_turnstile_secret = {
+          type = "secret_text"
+          value = cloudflare_turnstile_widget.register_radio360_turnstile_widget.secret
+        }
+      }
       fail_open = true
     }
     preview = {
       d1_databases = {
         radio360db = {
           id = cloudflare_d1_database.radio360db.id
+        }
+      }
+      env_vars = {
+        login_turnstile_secret = {
+          type = "secret_text"
+          value = cloudflare_turnstile_widget.login_radio360_turnstile_widget.secret
+        }
+        register_turnstile_secret = {
+          type = "secret_text"
+          value = cloudflare_turnstile_widget.register_radio360_turnstile_widget.secret
         }
       }
       fail_open = true
