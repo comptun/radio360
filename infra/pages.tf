@@ -19,7 +19,7 @@ resource "cloudflare_pages_project" "radio360" {
     }
     preview = {
       d1_databases = {
-        D1_BINDING = {
+        radio360db = {
           id = cloudflare_d1_database.radio360db.id
         }
       }
