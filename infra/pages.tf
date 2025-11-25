@@ -12,7 +12,7 @@ resource "cloudflare_pages_project" "radio360" {
     production = {
       d1_databases = {
         D1_BINDING = {
-          id = cloudflare_d1_database.radio360db.id
+          id = cloudflare_d1_database.radio360.id
         }
       }
     }
