@@ -81,6 +81,7 @@ function Topbar({user, onLogin, onLogout}) {
 
     return (<>
 
+    {!user && (<>
     <div id="Login" className="register-container">
         <div className="form-item">
             Login
@@ -117,6 +118,7 @@ function Topbar({user, onLogin, onLogout}) {
             <button className="std-button" type="button" onClick={handleRegister}>Register</button>
         </div>
     </div>
+    </>)}
     
     <div className="topbar" key={user}>
         <div className="topbar-item">
