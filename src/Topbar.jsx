@@ -120,7 +120,7 @@ function Topbar({user, onLogin, onLogout}) {
     
     <div className="topbar" key={user}>
         <div className="topbar-item">
-            <button className="std-button" name="Logo" type="button">radio360</button>
+            <button className="std-button" name="Logo" type="button">/ radio360 /</button>
         </div>
         {!user ? (<>
         <div className="topbar-item">
