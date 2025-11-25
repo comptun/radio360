@@ -11,8 +11,9 @@ resource "cloudflare_pages_project" "radio360" {
   source {
     type = "github"
     config {
+      deployments_enabled = true
       owner    = "comptun"
-      repo     = "radio360"
+      repo_name     = "radio360"
       production_branch = "main"
     }
   }
