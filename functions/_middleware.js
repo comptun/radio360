@@ -1,4 +1,4 @@
-import { getSession } from "../shared/session";z
+import { getSession } from "../shared/session";
 
 export async function onRequest(context) {
   const cookie = context.request.headers.get("Cookie") || "";
