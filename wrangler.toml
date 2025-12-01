@@ -13,3 +13,6 @@ database_name = "radio360db"
 database_id = "c15df2fc-dd2f-463b-bf37-e9075c5224c3"
 binding = "radio360db"
 database_name = "radio360db"
+
+[deployment]
+ignore_actions = true

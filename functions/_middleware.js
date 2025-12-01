@@ -17,7 +17,7 @@ async function authentication(context) {
 }
 
 async function sentry(context) {
-  Sentry.sentryPagesPlugin((context) => ({
+  return Sentry.sentryPagesPlugin((context) => ({
     dsn: "https://3ccfbeecf594a0e536c62609fcaa70bd@o4510460009709573.ingest.us.sentry.io/4510460016852992",
 
     // Setting this option to true will send default PII data to Sentry.
