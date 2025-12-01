@@ -50,7 +50,7 @@ resource "cloudflare_pages_project" "radio360" {
   source = {
     type = "github"
     config = {
-      deployments_enabled = true
+      deployments_enabled = false
       owner    = "comptun"
       path_excludes = ["string"]
       path_includes = ["string"]
@@ -58,7 +58,7 @@ resource "cloudflare_pages_project" "radio360" {
       preview_branch_excludes = ["string"]
       preview_branch_includes = ["string"]
       preview_deployment_setting = "all"
-      production_deployments_enabled = true
+      production_deployments_enabled = false
       repo_name     = "radio360"
     }
   }
