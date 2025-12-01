@@ -8,7 +8,6 @@
     "preview": "wrangler pages dev .dist"
   },
   "dependencies": {
-    "@sentry/cloudflare": "^10.27.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },
