@@ -21,6 +21,8 @@ export async function onRequestPost({ request, env }) {
 
     const session = await createSession(env, userData.user_id);
 
+    console.log({user_id: userData.user_id});
+
     return new Response(
         
         JSON.stringify({
