@@ -49,11 +49,11 @@ var gfx = {
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, squareIndices, this.gl.STATIC_DRAW);
 
         // Get locations of vertex position and texcoord position locations in shader, this is the same in all of them
-        this.positionLocation = this.gl.getAttribLocation(this.imageProgram, "a_position");
+        this.positionLocation = this.gl.getAttribLocation(this.planetProgram, "a_position");
         this.gl.enableVertexAttribArray(this.positionLocation);
         this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 16, 0);
 
-        this.texCoordLocation = this.gl.getAttribLocation(this.imageProgram, "a_texCoord");
+        this.texCoordLocation = this.gl.getAttribLocation(this.planetProgram, "a_texCoord");
         this.gl.enableVertexAttribArray(this.texCoordLocation);
         this.gl.vertexAttribPointer(this.texCoordLocation, 2, this.gl.FLOAT, false, 16, 8);
 
@@ -615,6 +615,7 @@ var gfx = {
         mat4.scale(this.modelMatrix, this.modelMatrix, [x , -y , 1]);
     },
 
+    // Draw islands for all countries
     drawIslands : function() {
         this.gl.useProgram(this.geoProgram);
 
@@ -624,11 +625,11 @@ var gfx = {
 
         for (let i = 0; i < this.geoData.length; i++) {
             this.gl.bindVertexArray(this.geoData[i].vao);
-            //this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.drawArrays(this.gl.TRIANGLES, 0, this.geoData[i].vertices.length/2);
         }
     },
 
+    // Draw island outlines for all countries
     drawIslandsOutline : function() {
         this.gl.useProgram(this.geoProgram);
 
@@ -638,7 +639,6 @@ var gfx = {
 
         for (let i = 0; i < this.geoOutlineData.length; i++) {
             this.gl.bindVertexArray(this.geoOutlineData[i].vao);
-            //this.gl.drawElements(this.gl.TRIANGLES, this.geoData[i].indices.length, this.gl.UNSIGNED_SHORT, 0);
             this.gl.drawArrays(this.gl.LINE_STRIP, 0, this.geoOutlineData[i].vertices.length/2);
         }
     },
