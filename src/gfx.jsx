@@ -3,29 +3,16 @@ import ImageList from './image_list';
 import GeoJson from './data/countries.json';
 import { earcut, flatten } from './earcut';
 
-
-function subdivideTriangle(a, b, c, depth) {
-    if (depth === 0) return [a, b, c];
-
-    // midpoints
-    const ab = [(a[0]+b[0])*0.5, (a[1]+b[1])*0.5];
-    const bc = [(b[0]+c[0])*0.5, (b[1]+c[1])*0.5];
-    const ca = [(c[0]+a[0])*0.5, (c[1]+a[1])*0.5];
-
-    return [
-        ...subdivideTriangle(a, ab, ca, depth - 1),  // top left
-        ...subdivideTriangle(ab, b, bc, depth - 1),  // top right
-        ...subdivideTriangle(ca, bc, c, depth - 1),  // bottom
-        ...subdivideTriangle(ab, bc, ca, depth - 1)  // center
-    ];
-}
-
+// WebGL gfx functions I made
 var gfx = {
 
     canvas : null,
 
+    // Intialises WebGL with the canvas
     start : function(canvas) {
         this.canvas = canvas;
+
+        // Get the webgl2 rendering context
         this.gl = this.canvas.getContext("webgl2", { premultipliedAlpha: false });
 
         if (this.gl == null) {
@@ -36,24 +23,20 @@ var gfx = {
         // Enable alpha blending
         this.gl.enable(this.gl.BLEND);
         this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-        this.gl.clearColor(0, 0, 0, 0); // Ensure transparent background
+        this.gl.clearColor(0, 0, 0, 0);
 
-        // this.gl.enable(this.gl.CULL_FACE);
-        // this.gl.cullFace(this.gl.BACK);
-
+        // Enable depth testing
         this.gl.enable(this.gl.DEPTH_TEST);
 
+        // The point in time when the app started, for potential use in some shaders
         this.startTime = Date.now();
 
-        this.imageProgram = this.createShaderProgram(vsSource, fsSource);
-        this.backgroundProgram = this.createShaderProgram(vsBackgroundSource, fsSpace);
-        this.imageColourProgram = this.createShaderProgram(vsSource, fsImageColourSource);
-        this.floorProgram = this.createShaderProgram(vsBackgroundSource, fsGround);
-        this.sphereProgram = this.createShaderProgram(vsSphere, fsSphere);
+        // Create appropriate shader programs
         this.planetProgram = this.createShaderProgram(vsSphere, fsPlanet);
         this.geoProgram = this.createShaderProgram(vsGeo2, fsGeo);
         this.pointProgram = this.createShaderProgram(vsPoint, fsPoint);
 
+        // Setup VAO, VBO, and EBO for rendering a simple rectangle/square if needed
         this.squareVAO = this.gl.createVertexArray();
         this.gl.bindVertexArray(this.squareVAO);
 
@@ -65,6 +48,7 @@ var gfx = {
         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.squareEBO);
         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, squareIndices, this.gl.STATIC_DRAW);
 
+        // Get locations of vertex position and texcoord position locations in shader, this is the same in all of them
         this.positionLocation = this.gl.getAttribLocation(this.imageProgram, "a_position");
         this.gl.enableVertexAttribArray(this.positionLocation);
         this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 16, 0);
@@ -73,18 +57,26 @@ var gfx = {
         this.gl.enableVertexAttribArray(this.texCoordLocation);
         this.gl.vertexAttribPointer(this.texCoordLocation, 2, this.gl.FLOAT, false, 16, 8);
 
+        // For caching any image data
         this.imageTextures = new Map();
+        // For caching shader uniform locations
         this.uniformLocations = new Map();
 
+        // The mouse delta when the mouse is held down
         this.mouseDelta = {"x": 0, "y": 0};
+        // Mouse position relative to the canvas
         this.mousePos = {"x": 0, "y": 0};
+        // The zoom level from the scroll wheel
         this.zoom = 1;
 
+        // Canvas width and height initialised to window width/height
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
+        // Model matrix initialised with identity mat4
         this.modelMatrix = mat4.create();
 
+        // Perspective and orthographic projection matrices initialised if either are needed
         const width = this.canvas.width;
         const height = this.canvas.height;
 
@@ -99,34 +91,41 @@ var gfx = {
         mat4.perspective(this.projPerspectiveMatrix, fieldOfView, aspect, zNear, zFar);
         mat4.ortho(this.projOrthoMatrix, -width/2, width/2, height/2, -height/2, zNear, zFar);
 
+        // Default projection matrix is set as orthographic
         this.projMatrix = this.projOrthoMatrix;
         this.currentProj = "ortho";
 
+        // To store the triangulated vertex positions for all the islands on the globe, to be passed to a vertex buffer
         this.geoData = [];
+        // Stores non-triangulated island vertex positions data for the outline rendering of the islands, to be passed to a vertex buffer
         this.geoOutlineData = [];
-
+        // Stores longitude and latitude values transformed into 3d points on a sphere for rendering the radio station point mesh, to be passed to a vertex buffer
+        this.stationPoints = [];
+        // Stores non mesh related data to do with each radio station point
+        this.stationData = [];
+        // The vertex array that can be binded to draw the stations in one draw call
+        this.stationVAO = null;
+        
+        // Get the x and y scaling of the islands so it can be rendered to the correct aspect ratio
         this.mapScale = null;
         this.getMapScale();
 
         this.islandsFramebuffer = this.createFramebuffer();
         
+        // Read all geo data from countries.json for each country and translate into vertex buffers linked to vertex arrays
+        // each island has an individual vbo and vao
         this.readGeoData();
-
-        this.stationPoints = [];
-        this.stationData = [];
-        this.stationVAO = null;
     },
 
-    recalculateCanvasSize() {
+    // Recalculate projection matrix when the window is resized
+    recalculateCanvasSize : function() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
         const width = this.canvas.width;
         const height = this.canvas.height;
 
-        //this.gl.viewport(0, 0, width, height);
-
-        const fieldOfView = (45 * Math.PI) / 180; // in radians
+        const fieldOfView = (45 * Math.PI) / 180;
         const aspect = width/height;
         const zNear = 0.01;
         const zFar = 10000.0;
@@ -138,39 +137,34 @@ var gfx = {
         this.projMatrix = this.projOrthoMatrix;
     },
 
-    projectToScreen(point, modelMatrix, projMatrix) {
-        // 1. Convert point to vec4
+    // Converts a point in 3d space into screen coordinates
+    projectToScreen : function(point, modelMatrix, projMatrix) {
         const p = vec4.fromValues(point[0], point[1], point[2], 1.0);
 
-        const view  = mat4.create();   // camera doesn’t move
-        // proj must be your real projection matrix
-        // e.g., mat4.perspective(proj, fov, aspect, near, far);
+        // Camera view matrix isn't needed
+        const view  = mat4.create();
 
         const mvp = mat4.create();
-        mat4.multiply(mvp, modelMatrix, p);    // world pos (same as pos if model = identity)
-        mat4.multiply(mvp, view, mvp);     // unchanged since view = identity
-        mat4.multiply(mvp, projMatrix, mvp);     // clip = proj * pos
+        mat4.multiply(mvp, modelMatrix, p);
+        mat4.multiply(mvp, view, mvp);
+        mat4.multiply(mvp, projMatrix, mvp);
 
-        // Actually transform in one call:
-        const clip = vec4.create();
-        vec4.transformMat4(clip, p, projMatrix);
-
-        // 3. Perspective divide → NDC
+        // Perspective divide
         const ndc = [
             mvp[0] / mvp[3],
             mvp[1] / mvp[3],
             mvp[2] / mvp[3]
         ];
 
-        // 4. NDC → screen coordinates (pixels)
         const x = ndc[0] * this.canvas.width;
-        const y = ndc[1] * this.canvas.height; // flip Y for canvas
-        const z = ndc[2]; // depth (0..1)
+        const y = ndc[1] * this.canvas.height;
+        const z = ndc[2];
 
         return { x, y, z };
     },
 
-    clickScreen(Pos) {
+    // Calculates if a radio station point was clicked by the mouse
+    clickScreen : function(Pos) {
         for (let i = 0; i < this.stationPoints.length-1; i+=2) {
 
             let DEG2RAD = 3.141592653589793 / 180.0;
@@ -216,12 +210,15 @@ var gfx = {
         return null;
     },
 
+    // Add a vertex position to the station vertex buffer list
     addStationPoint : function(x, y, data) {
         this.stationPoints.push(x);
         this.stationPoints.push(y);
+        // Add additional data for that index
         this.stationData.push(data);
     },
 
+    // Create VBO and VAO for stations mesh once all points have been added
     createStations : function() {
         this.stationVAO = this.gl.createVertexArray();
         this.gl.bindVertexArray(this.stationVAO);
@@ -237,6 +234,7 @@ var gfx = {
         this.gl.bindVertexArray(null);
     },
 
+    // Draw station points to screen
     drawStations : function() {
         this.gl.useProgram(this.pointProgram);
 
@@ -245,8 +243,9 @@ var gfx = {
         this.gl.uniformMatrix4fv(this.getUniformLocation(this.pointProgram, "model"), false, this.modelMatrix);
 
         let mx = ((this.mousePos.x / this.canvas.width) * 2.0 - 1.0) * this.canvas.width;
-        let my = (1.0 - (this.mousePos.y / this.canvas.height) * 2.0) * this.canvas.height; // flip Y
+        let my = (1.0 - (this.mousePos.y / this.canvas.height) * 2.0) * this.canvas.height;
 
+        // Pass mouse position as uniform so proximity to a point is calculated in the shader and logic can be added there
         this.gl.uniform2fv(this.getUniformLocation(this.pointProgram, "mouse"), [mx,my]);
         this.gl.uniform2fv(this.getUniformLocation(this.pointProgram, "viewportSize"), [this.canvas.width,this.canvas.height]);
 
@@ -262,9 +261,10 @@ var gfx = {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, fb);
     },
 
+    // Standard function for creating a framebuffer
     createFramebuffer : function() {
-        let width = this.mapScale.x*2000;//this.canvas.width;
-        let height = this.mapScale.y*2000;//this.canvas.height;
+        let width = this.mapScale.x*2000;
+        let height = this.mapScale.y*2000;
 
         const texture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
@@ -280,7 +280,6 @@ var gfx = {
             null
         );
 
-        // Required texture parameters for FBO attachments
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
@@ -321,6 +320,7 @@ var gfx = {
         }
     },
 
+    // Get the aspect ratio of the map if it is being rendered to a framebuffer so it can be sized correctly
     getMapScale : function() {
         if (this.mapScale!=null) {
             return this.mapScale;
@@ -352,8 +352,27 @@ var gfx = {
         return this.mapScale;
     },
 
+    // For subdividing island geometry in case it appears mangled when projected onto a globe
+    // large countries such as Russia need this, or they may appear to be clipping with other things
+    subdivideTriangle : function(a, b, c, depth) {
+        if (depth === 0) return [a, b, c];
+
+        const ab = [(a[0]+b[0])*0.5, (a[1]+b[1])*0.5];
+        const bc = [(b[0]+c[0])*0.5, (b[1]+c[1])*0.5];
+        const ca = [(c[0]+a[0])*0.5, (c[1]+a[1])*0.5];
+
+        return [
+            ...subdivideTriangle(a, ab, ca, depth - 1),
+            ...subdivideTriangle(ab, b, bc, depth - 1),
+            ...subdivideTriangle(ca, bc, c, depth - 1),
+            ...subdivideTriangle(ab, bc, ca, depth - 1)
+        ];
+    },
+
+    // Read the countries.json file in data/ and create vertex array objects from them so each country can be rendered individually
     readGeoData : function() {
 
+        // For creating the islands
         let read = (coords, name) => {
 
             let indices = [];
@@ -361,12 +380,6 @@ var gfx = {
 
             let data = flatten(coords);
             let tris = earcut(data.vertices, data.holes, data.dimensions);
-            // for (let k = 0; k < tris.length; k++) {
-            //     indices.push(tris[k]);
-            // }
-            // for (let k = 0; k < data.vertices.length; k++) {
-            //     vertices.push(data.vertices[k]);
-            // }
 
             for (let t = 0; t < tris.length; t += 3) {
                 const i0 = tris[t+0] * 2;
@@ -377,14 +390,12 @@ var gfx = {
                 const b = [data.vertices[i1],     data.vertices[i1+1]];
                 const c = [data.vertices[i2],     data.vertices[i2+1]];
 
-                // SUBDIVIDE IT HERE (depth 1 or 2)
                 let subdivisions = 0;
                 if (name == "Russia") {
                     subdivisions = 2;
                 }
-                const subdivided = subdivideTriangle(a, b, c, subdivisions);
+                const subdivided = gfx.subdivideTriangle(a, b, c, subdivisions);
 
-                // Flatten into the final vertex list
                 for (let v = 0; v < subdivided.length; v++) {
                     vertices.push(subdivided[v][0]);
                     vertices.push(subdivided[v][1]);
@@ -398,10 +409,6 @@ var gfx = {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, VBO);
             this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(vertices), this.gl.STATIC_DRAW);
 
-            // let EBO = this.gl.createBuffer();
-            // this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, EBO);
-            // this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), this.gl.STATIC_DRAW);
-
             let positionLocation = this.gl.getAttribLocation(this.geoProgram, "a_position");
             this.gl.enableVertexAttribArray(positionLocation);
             this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 4*2, 0);
@@ -414,6 +421,7 @@ var gfx = {
             });
         }
 
+        // For creating the country outlines
         let read2 = (coords, name) => {
 
             let indices = [];
@@ -443,6 +451,7 @@ var gfx = {
             });
         }
 
+        // Islands
         for (let i = 0; i < GeoJson.features.length; i++) {
 
             if (GeoJson.features[i].geometry.type != "MultiPolygon") {
@@ -454,7 +463,7 @@ var gfx = {
                 }
             }
         }
-
+        // Island outlines
         for (let i = 0; i < GeoJson.features.length; i++) {
 
             if (GeoJson.features[i].geometry.type != "MultiPolygon") {
@@ -472,18 +481,19 @@ var gfx = {
         }
     },
 
+    // Set mouse delta variable
     setMouseDelta : function(Pos) {
         this.mouseDelta = Pos;
     },
-
+    // Set mouse position
     setMousePos : function(Pos) {
         this.mousePos = Pos;
     },
-
+    // Set zoom from scroll wheel
     setZoom : function(Zoom) {
         this.zoom = Zoom;
     },
-
+    // Toggle the projection matrix from perspective -> ortho, and ortho -> perspective
     togglePerspective : function() {
         if (this.currentProj == "ortho") {
             this.currentProj = "perspective";
@@ -495,6 +505,7 @@ var gfx = {
         }
     },
 
+    // Returns he webgl context
     getContext : function() {
         return this.gl;
     },
@@ -505,11 +516,11 @@ var gfx = {
         // Clear the color buffer with specified clear color
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        //this.gl.disable(this.gl.DEPTH_TEST);
-
+        // Set the viewport size to the window size
         this.gl.viewport(0,0,width,height);
     },
 
+    // Get the cached shader uniform location
     getUniformLocation : function(program, name) {
         if (this.uniformLocations.has(name)) {
             return this.uniformLocations.get(name);
@@ -519,6 +530,7 @@ var gfx = {
         return location;
     },
 
+    // Create and compile a fragment or vertex shader from sourcecode
     createShader : function(type, source) {
         const shader = this.gl.createShader(type);
         this.gl.shaderSource(shader, source);
@@ -531,6 +543,7 @@ var gfx = {
         return shader;
     },
 
+    // Compiles both vert and frag shaders and links them into a shader program
     createShaderProgram : function(vert, frag) {
         let vertexShader = this.createShader(this.gl.VERTEX_SHADER, vert);
         let fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, frag);
@@ -545,16 +558,19 @@ var gfx = {
         return program;
     },
 
+    // Create a texture from an image's directory
     createTexture : function(imageSrc) {
         let texture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
 
         let image = new Image();
-        image.crossOrigin = "anonymous"; // Enable cross-origin loading
+        image.crossOrigin = "anonymous";
         image.src = ImageList[imageSrc];
 
+        // Cache the texture data
         this.imageTextures.set(imageSrc, {loaded: false, texture: texture});
 
+        // Generate texture once image has actually loaded
         image.onload = () => {
             this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
             this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
@@ -564,139 +580,39 @@ var gfx = {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.REPEAT);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.REPEAT);
 
-            //this.gl.generateMipmap(this.gl.TEXTURE_2D);
-
+            // Mark the texture as loaded
             this.imageTextures.get(imageSrc).loaded = true;
         };
 
         return texture;
     },
 
+    // Return texture data
     getTexture : function(imageSrc) {
+        // The texture is already loaded, return the cached data
         if (this.imageTextures.has(imageSrc)) {
             return this.imageTextures.get(imageSrc);
         }
+        // Create the texture, it doesn't exist yet
         return this.createTexture(imageSrc);
     },
 
+    // Set the model matrix to the identity mat4
     resetMatrix : function() {
         this.modelMatrix = mat4.create();
     },
 
+    // Change the position of the model matrix
     translate : function(x, y, z) {
-        //this.modelMatrix = mat4.create();
         mat4.translate(this.modelMatrix, this.modelMatrix, [x - this.canvas.width / 2, this.canvas.height / 2 - y, -1000.0 + z]);
     },
+    // Change the rotation of the model matrix
     rotate : function(rotation, axis) {
         mat4.rotate(this.modelMatrix, this.modelMatrix, -rotation, axis);
     },
+    // Change the scale of the model matrix
     scale : function(x, y) {
         mat4.scale(this.modelMatrix, this.modelMatrix, [x , -y , 1]);
-    },
-    getScreenPos : function(x, y, z) {
-        const point3D = vec4.fromValues(x, y, z, 1.0); // Replace x, y, z with your 3D point
-
-        // Model, view, projection matrices (assume these are predefined)
-        this.modelMatrix = mat4.create();
-        this.translate(x,y,z);
-        const modelMatrix = this.modelMatrix;
-        const projectionMatrix = this.projMatrix;
-
-        // Apply the model, view, and projection matrices
-        const mvpMatrix = mat4.create();
-        mat4.multiply(mvpMatrix, projectionMatrix, modelMatrix);
-
-        // Transform the point using the MVP matrix
-        const transformedPoint = vec4.transformMat4([], [0,0,0,1], mvpMatrix);
-
-        // Perform the perspective divide (to get normalized device coordinates)
-        const ndcX = transformedPoint[0] / transformedPoint[3];
-        const ndcY = transformedPoint[1] / transformedPoint[3];
-        const ndcZ = transformedPoint[2] / transformedPoint[3];
-
-        // Viewport transformation (assumes viewport width and height)
-        const screenX = (ndcX * 0.5 + 0.5) * this.canvas.width;
-        const screenY = this.canvas.height - (ndcY * 0.5 + 0.5) * this.canvas.height;
-
-        console.log(`Screen Coordinates: (${screenX}, ${screenY})`);
-        return {x:screenX,y:screenY};
-    },
-
-    drawImage : function(image, alpha=1.0) {
-        let texture = this.getTexture(image);
-
-        if (!texture.loaded) {
-            return;
-        }
-
-        this.gl.useProgram(this.imageProgram);
-
-        this.gl.uniform1f(this.getUniformLocation(this.imageProgram, "alpha"), alpha);
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.imageProgram, "proj"), false, this.projMatrix);
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.imageProgram, "model"), false, this.modelMatrix);
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture.texture);
-        this.gl.bindVertexArray(this.squareVAO);
-        this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
-        //this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
-    },
-
-    drawImageColour : function(image, colour) {
-        let texture = this.getTexture(image);
-
-        if (!texture.loaded) {
-            return;
-        }
-
-        this.gl.useProgram(this.imageColourProgram);
-
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.imageColourProgram, "proj"), false, this.projMatrix);
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.imageColourProgram, "model"), false, this.modelMatrix);
-
-        this.gl.uniform4fv(this.getUniformLocation(this.imageColourProgram, "u_colour"), colour);
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture.texture);
-        this.gl.bindVertexArray(this.squareVAO);
-        this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
-    },
-
-    drawBackground : function(transparency) {
-        this.gl.useProgram(this.backgroundProgram);
-
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.backgroundProgram, "proj"), false, this.projMatrix);
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.backgroundProgram, "model"), false, this.modelMatrix);
-
-        let time = (new Date().getTime() - this.startTime) / 1000.0 + 10.0;
-        this.gl.uniform1f(this.getUniformLocation(this.backgroundProgram, "time"), time);
-        this.gl.uniform1f(this.getUniformLocation(this.backgroundProgram, "transparency"), transparency);
-        this.gl.uniform2f(this.getUniformLocation(this.backgroundProgram, "resolution"), this.canvas.width, this.canvas.height);
-
-        this.gl.bindVertexArray(this.squareVAO);
-        this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
-    },
-
-    drawFloor : function() {
-        this.gl.useProgram(this.floorProgram);
-
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.floorProgram, "proj"), false, this.projMatrix);
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.floorProgram, "model"), false, this.modelMatrix);
-
-        let time = (new Date().getTime() - this.startTime) / 1000.0 + 10.0;
-        this.gl.uniform1f(this.getUniformLocation(this.floorProgram, "time"), time);
-        this.gl.uniform2f(this.getUniformLocation(this.floorProgram, "resolution"), this.canvas.width, 100);
-
-        this.gl.bindVertexArray(this.squareVAO);
-        this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
-    },
-
-    drawSphere : function() {
-        this.gl.useProgram(this.sphereProgram);
-
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.sphereProgram, "proj"), false, this.projMatrix);
-        this.gl.uniformMatrix4fv(this.getUniformLocation(this.sphereProgram, "model"), false, this.modelMatrix);
-
-        this.gl.bindVertexArray(this.squareVAO);
-        this.gl.drawElements(this.gl.TRIANGLES, squareIndices.length, this.gl.UNSIGNED_SHORT, 0);
     },
 
     drawIslands : function() {
@@ -746,10 +662,6 @@ var gfx = {
         let Channel0 = gfx.getIslandsFramebuffer();//gfx.getTexture("map");
         let Channel1 = gfx.getTexture("cloud");
         let Channel2 = gfx.getTexture("light");
-
-        // if (!Channel0.loaded || !Channel1.loaded || !Channel2.loaded) {
-        //     return;
-        // }
 
         this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, Channel0.texture);
@@ -884,17 +796,6 @@ const vsGeo2 = `
     }
 `;
 
-const vsGeo = `
-    attribute vec2 a_position;
-
-    uniform mat4 model;
-    uniform mat4 proj;
-
-    void main() {
-        gl_Position = proj * model * vec4(a_position.x, a_position.y, 0.0, 1.0);
-    }
-`;
-
 const fsGeo = `
     precision mediump float;
 
@@ -920,7 +821,6 @@ const vsSource = `
     }
 `;
 
-// Fragment shader
 const fsSource = `
     precision mediump float;
     varying vec2 v_texCoord;
@@ -949,24 +849,6 @@ const vsSphere = `
     }
 `;
 
-const vsPlanet = `
-    attribute vec4 a_position;
-    
-    uniform mat4 model;
-    uniform mat4 proj;
-
-    attribute vec2 a_texCoord;
-    varying vec2 v_texCoord;
-
-    varying vec4 fragCoord;
-
-    void main() {
-        v_texCoord = a_texCoord;
-        fragCoord = a_position;
-        gl_Position = proj * model * a_position;
-    }
-`;
-
 const fsSphere = `
     precision mediump float;
 
@@ -979,148 +861,6 @@ const fsSphere = `
         }
         gl_FragColor = colour;
     }
-`;
-
-// Fragment shader
-const fsImageColourSource = `
-    precision mediump float;
-    varying vec2 v_texCoord;
-    uniform sampler2D u_texture;
-    uniform vec4 u_colour;
-    void main() {
-        float alpha = texture2D(u_texture, v_texCoord)[3];
-        
-        if (alpha < 0.5) {
-            gl_FragColor = vec4(0.0,0.0,0.0,0.0);
-            return;
-        }
-        
-        gl_FragColor = u_colour;
-    }
-`;
-
-const vsBackgroundSource = `
-    attribute vec4 a_position;
-    
-    uniform mat4 model;
-    uniform mat4 proj;
-    
-    void main() {
-        gl_Position = proj * model * a_position;
-    }
-`;
-
-const fsSpace = `
-    precision mediump float;
-    
-    uniform float time;
-    uniform vec2 resolution;
-    uniform float transparency;
-    
-    vec4 textureRND2D(vec2 uv){
-        uv = floor(fract(uv)*1e3);
-        float v = uv.x+uv.y*1e3;
-        return fract(1e5*sin(vec4(v*1e-2, (v+1.)*1e-2, (v+1e3)*1e-2, (v+1e3+1.)*1e-2)));
-    }
-    
-    float noise(vec2 p) {
-        vec2 f = fract(p*1e3);
-        vec4 r = textureRND2D(p);
-        f = f*f*(3.0-2.0*f);
-        return (mix(mix(r.x, r.y, f.x), mix(r.z, r.w, f.x), f.y));
-    }
-    
-    float cloud(vec2 p) {
-        float v = 0.0;
-        v += noise(p*1.)*.50000;
-        v += noise(p*2.)*.2;
-        v += noise(p*4.)*.12500;
-        v += noise(p*8.)*.06250;
-        v += noise(p*16.)*.03125;
-        return v*v*v;
-    }
-    
-    void main( void ) {
-        vec2 p = (floor(gl_FragCoord.xy / 10.0) * 10.0 * 6.0 - resolution.xy) / min(resolution.x, resolution.y) * 0.05 / 8.0;
-        //vec2 p = (gl_FragCoord.xy * 6.0 - resolution.xy) / min(resolution.x, resolution.y) * 0.05 / 8.0;
-        p.y += sin(p.x * 150.0 + time) / 100.0 * gl_FragCoord.y / resolution.y;
-        p.x += time / 1000.0;
-        
-        vec3 c = vec3(0.0, 0.0, 1.0);
-        c.rgb += vec3(0.0, 0.0, 1.0) * cloud(p*.3+time*.001)*.6;
-        c.gbr += vec3(0.784, 1.0, 0.) * cloud(p*.2+time*.001)*.8;
-        c.grb += vec3(0.784, 0.0, 1.0) * cloud(p*.1+time*.001)*1.;
-        gl_FragColor = vec4(c, transparency);
-    }
-
-`;
-
-const fsGround = `
-precision mediump float;
-
-uniform float time;
-uniform vec2 resolution;
-
-float hash(float n) { return fract(sin(n) * 1e4); }
-float hash(vec2 p) { return fract(1e4 * sin(17.0 * p.x + p.y * 0.1) * (0.1 + abs(sin(p.y * 13.0 + p.x)))); }
-
-float noise(float x) {
-    float i = floor(x);
-    float f = fract(x);
-    float u = f * f * (3.0 - 2.0 * f);
-    return mix(hash(i), hash(i + 1.0), u);
-}
-
-float fbm(float x) {
-    float v = 0.0;
-    float a = 0.5;
-    float shift = float(100);
-    for (int i = 0; i < 1; ++i) {
-        v += a * noise(x);
-        x = x * 2.0 + shift;
-        a *= 0.5;
-    }
-    return v;
-}
-
-float noise2D(vec2 x) {
-    vec2 i = floor(x);
-    vec2 f = fract(x);
-
-    float a = hash(i);
-    float b = hash(i + vec2(1.0, 0.0));
-    float c = hash(i + vec2(0.0, 1.0));
-    float d = hash(i + vec2(1.0, 1.0));
-
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-}
-
-#define PIXEL_SIZE 5.0
-#define SCROLL_SPEED 1.0
-
-void main() {
-    float v = 0.0;
-    
-    float coord2 = floor(gl_FragCoord.x / PIXEL_SIZE / 5.0 + time * 5.0 * SCROLL_SPEED) * PIXEL_SIZE * 0.05 - 10.0;
-    float height = fbm(coord2) * resolution.y / 2.0;
-    v = clamp((height - floor(gl_FragCoord.y / PIXEL_SIZE) * PIXEL_SIZE + resolution.y / 2.0) / (resolution.y * 0.02), 0.0, 1.0);
-    
-    vec3 col = pow(v, 0.35) * 1.3 * normalize(vec3(0.5, gl_FragCoord.xy / resolution.xy)) + vec3(v * 0.25);
-    
-    if (col.r < 0.1 && col.g < 0.1 && col.b < 0.1) {
-        gl_FragColor = vec4(0.0);
-        return;
-    }
-    
-    vec2 coord = floor(gl_FragCoord.xy / PIXEL_SIZE) * PIXEL_SIZE * 0.025 + vec2(time * 3.0 * SCROLL_SPEED, resolution.y / 2.0);
-    float v2 = noise2D(coord);
-    
-    gl_FragColor = vec4(1, 0.984, 0, 1.0) + vec4(v2, v2, v2, 0.0) / 2.0;
-    //gl_FragColor = vec4(0.788, 0.784, 0.38, 1.0);
-    //gl_FragColor = vec4(pow(v, 0.35) * 1.3 * normalize(vec3(0.5, gl_FragCoord.xy / resolution.xy)) + vec3(v * 0.25), 1.0);
-}
-
 `;
 
 export default gfx;

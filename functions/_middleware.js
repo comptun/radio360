@@ -1,5 +1,6 @@
 import { getSession } from "../shared/session";
 
+// Sets context user_id from the session cookie on page load
 export async function onRequest(context) {
   const cookie = context.request.headers.get("Cookie") || "";
   const match = cookie.match(/session=([^;]+)/);
