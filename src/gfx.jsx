@@ -362,10 +362,10 @@ var gfx = {
         const ca = [(c[0]+a[0])*0.5, (c[1]+a[1])*0.5];
 
         return [
-            ...subdivideTriangle(a, ab, ca, depth - 1),
-            ...subdivideTriangle(ab, b, bc, depth - 1),
-            ...subdivideTriangle(ca, bc, c, depth - 1),
-            ...subdivideTriangle(ab, bc, ca, depth - 1)
+            ...gfx.subdivideTriangle(a, ab, ca, depth - 1),
+            ...gfx.subdivideTriangle(ab, b, bc, depth - 1),
+            ...gfx.subdivideTriangle(ca, bc, c, depth - 1),
+            ...gfx.subdivideTriangle(ab, bc, ca, depth - 1)
         ];
     },
 
