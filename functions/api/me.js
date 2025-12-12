@@ -17,6 +17,8 @@ export async function onRequestGet(context) {
   const user = await context.env.radio360db.prepare(
     "SELECT user_id, username FROM users WHERE user_id = ?"
   ).bind(userId).first();
+
+  console.log({user_id: userData.user_id});
   
   // Return user data in response
   return new Response(JSON.stringify({

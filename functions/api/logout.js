@@ -13,6 +13,8 @@ export async function onRequestPost(context) {
       .run();
   }
 
+  console.log("Logged out");
+
   // Deletes cookie from browser data and logs out
   return new Response(
     JSON.stringify({ 

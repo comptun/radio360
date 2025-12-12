@@ -20,11 +20,14 @@ export async function onRequestPost({ request, env }) {
             }),
             { headers: { "Content-Type": "application/json" }}
         );
+
+        console.log("User " + username + " not found");
     }
 
     // Create new session cookie tied to this account id
     const session = await createSession(env, userData.user_id);
 
+    console.log("User logged in");
     console.log({user_id: userData.user_id});
 
     // Sets session cookie in user browser and logs them in

@@ -643,6 +643,7 @@ var gfx = {
         }
     },
 
+    // Draw the planet ocean that has the appearance of having reflectance
     drawPlanet : function() {
 
         this.gl.useProgram(this.planetProgram);
@@ -677,14 +678,14 @@ var gfx = {
     }
 }
 
+// Vertices for rendering square
 const squareVertices = new Float32Array([
-    -0.5,  0.5, 0.0, 0.0,  // v0
-     0.5,  0.5, 0.0, 0.0,  // v1
-     0.5, -0.5, 0.0, 0.0,  // v2
-    -0.5, -0.5, 0.0, 0.0   // v3
+    -0.5,  0.5, 0.0, 0.0,
+     0.5,  0.5, 0.0, 0.0,
+     0.5, -0.5, 0.0, 0.0,
+    -0.5, -0.5, 0.0, 0.0
 ]);
-
-// Two triangles
+// Indices for square
 const squareIndices = new Uint16Array([
     2, 1, 0,
     3, 2, 0

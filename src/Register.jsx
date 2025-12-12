@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import User from './User'
 
+// Component for handling user registration
 function Register() {
+    // Handles inputs in text
     const [inputs, setInputs] = useState({
         username: "",
         password: "",
@@ -15,7 +17,9 @@ function Register() {
     }
 
     async function handleSubmit() {
-        await User.Register(inputs.username, inputs.password);
+        if (inputs.password == inputs.passwordConfirm) {
+            await User.Register(inputs.username, inputs.password);
+        }
     }
 
     function handleExit() {

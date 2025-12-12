@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+// Component for the audio player
 function Player() {
 
   function handleClick(e) {

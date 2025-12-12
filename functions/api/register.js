@@ -18,6 +18,8 @@ export async function onRequestPost({ request, env }) {
             }),
             { headers: { "Content-Type": "application/json" }}
         )
+
+        console.log("Username " + username + " already exists");
     }
 
     // Generate random unique id to use as user_id
@@ -30,6 +32,9 @@ export async function onRequestPost({ request, env }) {
 
     // Create new session cookie to be stored in browser
     const session = await createSession(env, uid);
+
+    console.log("Account created");
+    console.log({user_id: userData.user_id});
 
     return new Response(
         JSON.stringify({ 
